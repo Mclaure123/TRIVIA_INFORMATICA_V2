@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROYECTO: BÓVEDA DIGITAL</title>
+
+    <style>
+        :root {
+            --bg-color: #0A0A0A; --text-color: #FFB800; --accent-color: #00FFFF;
+            --secondary-color: #606060; --error-color: #b32d2d; --font-terminal: 'Courier New', Courier, monospace;
+            --key-gap: 0.5vw;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: var(--font-terminal); display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+        #app-container { width: 90vw; aspect-ratio: 16 / 9; max-width: 1200px; border: 2px solid var(--secondary-color); padding: 2vw; position: relative; display: flex; justify-content: center; align-items: center; }
+        @media (min-width: 768px) { #app-container { width: 60vw; --key-gap: 0.3vw; } }
+        
+        .screen { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.5s ease-out; background-color: var(--bg-color); }
+        .screen.visible { opacity: 1; z-index: 10; }
+
+        #title-screen { text-align: center; gap: 1.5rem; }
+        #title-screen h1 { font-size: clamp(2.5rem, 4vw, 4.5rem); text-shadow: 0 0 10px var(--secondary-color); }
+        #title-screen p { font-size: clamp(1rem, 1.5vw, 1.5rem); color: var(--secondary-color); }
+        .button-group { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
+        .start-button, .reset-button { padding: 0.8rem 2.5rem; font-family: var(--font-terminal); font-size: clamp(1.2rem, 1.5vw, 1.8rem); cursor: pointer; transition: all 0.3s; }
+        .start-button { color: var(--bg-color); background-color: var(--accent-color); border: 2px solid var(--accent-color); }
+        .start-button:hover { background-color: transparent; color: var(--accent-color); box-shadow: 0 0 20px rgba(0, 255, 255, 0.7); }
+        .reset-button { font-size: clamp(0.9rem, 1.2vw, 1rem); color: var(--secondary-color); background-color: transparent; border: 2px solid var(--secondary-color); }
+        .reset-button:hover { background-color: var(--secondary-color); color: var(--bg-color); }
+
+        #player-name-screen { gap: 2vh; }
+        #name-display-container { width: 90%; height: 12%; border: 2px solid var(--secondary-color); padding: 1vh 2vw; display: flex; align-items: center; }
+        #name-display { font-size: clamp(1.5rem, 3vw, 2.5rem); min-height: 1em; }
+        #name-display .cursor { display: inline-block; background-color: var(--text-color); width: 0.5em; height: 1em; animation: blink-caret .8s step-end infinite; }
+        @keyframes blink-caret { from, to { background-color: transparent; } 50% { background-color: var(--text-color); } }
+        #virtual-keyboard { width: 100%; height: 55%; display: flex; flex-direction: column; gap: var(--key-gap); padding: 0 2%; }
+        .keyboard-row { display: flex; width: 100%; height: 25%; gap: var(--key-gap); }
+        .key { display: flex; justify-content: center; align-items: center; font-family: var(--font-terminal); background-color: var(--secondary-color); color: var(--text-color); border: 1px solid var(--bg-color); font-size: clamp(1rem, 2vw, 1.5rem); cursor: pointer; transition: background-color 0.2s, transform 0.1s; aspect-ratio: 1 / 1; flex-grow: 1; user-select: none; }
+        .key:active { transform: scale(0.95); }
+        .key .case-up { display: none; } #virtual-keyboard.shift-active .case-down { display: none; } #virtual-keyboard.shift-active .case-up { display: block; }
+        .key-special { flex-grow: 1.5; background-color: #404040; } .key-wide { flex-grow: 8; } .key-shift.active { background-color: var(--accent-color); color: var(--bg-color); }
+        
+        #category-hub-screen, #challenge-matrix-screen { justify-content: space-between; padding: 2vh 0; gap: 2vh; }
+        #category-hub-screen h2 { font-size: clamp(1.2rem, 2vw, 1.8rem); text-align: center; padding: 0 1rem; }
+        #category-grid { width: 100%; flex-grow: 1; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); gap: 1.5vmin; padding: 0 1vw; }
+        @media (min-width: 768px) { #category-grid { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); } }
+        .category-card { border: 2px solid var(--secondary-color); padding: 1.5vmin; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .category-card:hover { border-color: var(--accent-color); background-color: rgba(0, 255, 255, 0.05); }
+        .category-card h3 { font-size: clamp(0.9rem, 1.5vw, 1.2rem); margin-bottom: 1vh;}
+        .progress-container { width: 80%; height: 1.5vh; background-color: #222; border: 1px solid var(--secondary-color); margin-top: auto; }
+        .progress-bar { width: 0%; height: 100%; background-color: var(--accent-color); transition: width 0.5s ease-out; }
+        .progress-text { margin-top: 0.5vh; font-size: clamp(0.8rem, 1.5vw, 1.1rem); color: var(--secondary-color); }
+        
+        #challenge-matrix-screen h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); text-align: center; }
+        #challenge-grid { width: 100%; height: 80%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(5, 1fr); gap: 1.2vmin; padding: 0 5%; }
+        .challenge-node { border: 2px solid var(--secondary-color); background-color: transparent; font-family: var(--font-terminal); color: var(--secondary-color); font-size: clamp(1.2rem, 2vw, 1.8rem); cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: center; align-items: center; }
+        .challenge-node:hover:not(.status-correct) { border-color: var(--accent-color); color: var(--accent-color); background-color: rgba(0, 255, 255, 0.1); }
+        .challenge-node.status-correct { background-color: var(--accent-color); border-color: var(--accent-color); color: var(--bg-color); cursor: default; }
+        .challenge-node.status-incorrect { background-color: var(--secondary-color); border-color: var(--secondary-color); color: #333; text-decoration: line-through; }
+        .back-button { padding: 0.5rem 1.5rem; font-family: var(--font-terminal); font-size: clamp(1rem, 1.2vw, 1.4rem); color: var(--secondary-color); background-color: transparent; border: 2px solid var(--secondary-color); cursor: pointer; transition: all 0.3s; }
+        .back-button:hover { background-color: var(--secondary-color); color: var(--bg-color); }
+        
+        #game-interface-screen { justify-content: space-around; padding: 2vh 4vw; gap: 4vh; }
+        #question-container { width: 100%; min-height: 25%; border: 2px solid var(--secondary-color); padding: 2vmin; display: flex; justify-content: center; align-items: center; }
+        #question-text { font-size: clamp(1.2rem, 2vw, 1.6rem); text-align: center; }
+        #options-container { width: 100%; flex-grow: 1; display: grid; grid-template-columns: 1fr; grid-template-rows: repeat(4, 1fr); gap: 2vmin; }
+        .option-button { background-color: transparent; border: 2px solid var(--secondary-color); font-family: var(--font-terminal); color: var(--text-color); font-size: clamp(1rem, 1.6vw, 1.4rem); cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; padding: 0 2vw; text-align: left; }
+        .option-button:not(.locked):hover { border-color: var(--accent-color); background-color: rgba(0, 255, 255, 0.1); }
+        .option-button.selected { background-color: rgba(255, 184, 0, 0.2); }
+        .option-button.correct { border-color: var(--accent-color); background-color: var(--accent-color); color: var(--bg-color); text-shadow: 0 0 5px var(--bg-color); }
+        .option-button.incorrect { border-color: var(--error-color); background-color: var(--error-color); color: var(--secondary-color); text-decoration: line-through; }
+
+        #verdict-screen { z-index: 20; }
+        #verdict-message { font-size: clamp(1.8rem, 3vw, 2.5rem); text-align: center; padding: 2rem; animation: pulse 1s ease-in-out; letter-spacing: 2px; }
+        .verdict-correct { color: var(--accent-color); text-shadow: 0 0 10px var(--accent-color); }
+        .verdict-incorrect { color: var(--error-color); text-shadow: 0 0 10px var(--error-color); }
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 0; } 70% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div id="app-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const appContainer = document.getElementById('app-container');
+            const SAVE_KEY = 'PROJECT_DIGITAL_VAULT_SAVE';
+            const TOTAL_QUESTIONS_PER_CAT = 30;
+
+            const gameData = [
+                { id: "cat01", title: "ERA PERFORADA Y MECÁNICA", questions: [
+                    { id: 1, text: "¿Qué invención del siglo XVIII, usada en telares, fue precursora de la tarjeta perforada para almacenar información?", options: ["La imprenta de Gutenberg", "El telar de Jacquard", "El motor a vapor", "El teléfono"], correctIndex: 1 },
+                    { id: 2, text: "¿Para qué evento masivo se utilizaron por primera vez las tarjetas perforadas de Herman Hollerith para procesar datos?", options: ["La Exposición Universal de 1889", "El censo de EE.UU. de 1890", "La coronación de la Reina Victoria", "La construcción del Canal de Panamá"], correctIndex: 1 },
+                    { id: 3, text: "En una tarjeta perforada, la presencia de un agujero en una posición específica típicamente representaba un...", options: ["Dato erróneo", "Fin del archivo", "Número o carácter (un '1')", "Espacio en blanco (un '0')"], correctIndex: 2 },
+                    { id: 4, text: "¿Qué representaba la ausencia de un agujero en una tarjeta perforada?", options: ["Un valor nulo", "Un cero o estado 'off'", "Un dato corrupto", "La letra 'A'"], correctIndex: 1 },
+                    { id: 5, text: "La máquina creada por Hollerith que leía las tarjetas perforadas usando agujas metálicas se llamaba...", options: ["La Calculadora Universal", "El Motor Analítico", "La Máquina Tabuladora", "El secuenciador de datos"], correctIndex: 2 },
+                    { id: 6, text: "¿Qué futura mega-corporación tecnológica tiene sus raíces en la empresa fundada por Herman Hollerith?", options: ["Microsoft", "Apple", "Intel", "IBM"], correctIndex: 3 },
+                    { id: 7, text: "El principal beneficio de usar la Máquina Tabuladora en el censo de 1890 fue una drástica reducción en...", options: ["El costo del papel", "La necesidad de electricidad", "El tiempo de procesamiento", "El número de errores de imprenta"], correctIndex: 2 },
+                    { id: 8, text: "¿Cuál era el material principal con el que se fabricaban las tarjetas perforadas?", options: ["Plástico delgado", "Lámina de aluminio", "Cartulina rígida", "Madera de balsa"], correctIndex: 2 },
+                    { id: 9, text: "El concepto de usar tarjetas perforadas para controlar una máquina fue concebido originalmente por Charles Babbage para su...", options: ["Máquina Diferencial", "Computadora ENIAC", "Motor Analítico", "Calculadora de Pascal"], correctIndex: 2 },
+                    { id: 10, text: "Además de las tarjetas, ¿qué otro medio de almacenamiento usaba una secuencia de agujeros en papel?", options: ["El disco magnético", "La cinta de papel perforado", "El cilindro de cera", "La memoria de burbuja"], correctIndex: 1 },
+                    { id: 11, text: "El estándar de tarjeta perforada más famoso, introducido por IBM en 1928, tenía un formato de...", options: ["90 columnas y 10 filas", "80 columnas y 12 filas", "60 columnas y 20 filas", "100 columnas y 8 filas"], correctIndex: 1 },
+                    { id: 12, text: "En las tabuladoras, un 'panel de control' o 'plugboard' se usaba para...", options: ["Ajustar el brillo de la pantalla", "Programar la lógica de la máquina", "Almacenar los resultados finales", "Enfriar los componentes"], correctIndex: 1 },
+                    { id: 13, text: "¿Cómo se llamaba la máquina utilizada para crear los agujeros en las tarjetas perforadas manualmente?", options: ["Perforadora", "Impresora de tarjetas", "Keypunch (Perforadora de teclado)", "Tabuladora"], correctIndex: 2 },
+                    { id: 14, text: "La computadora Harvard Mark I, una de las primeras computadoras electromecánicas, utilizaba... para sus instrucciones.", options: ["Disquetes", "Cinta magnética", "Cinta de papel perforado", "Interruptores manuales"], correctIndex: 2 },
+                    { id: 15, text: "¿Qué operación lógica simple era la base del funcionamiento de los circuitos de la máquina tabuladora?", options: ["Cerrar un circuito eléctrico", "Invertir un campo magnético", "Reflejar un haz de luz", "Modular una frecuencia de radio"], correctIndex: 0 },
+                    { id: 16, text: "Una pila de tarjetas perforadas que contenía las instrucciones para ejecutar una tarea se conocía como...", options: ["Un archivo de sistema", "Un 'deck' o mazo de programa", "Una librería de funciones", "Un compilador"], correctIndex: 1 },
+                    { id: 17, text: "El código de caracteres más común para tarjetas perforadas, que permitía representar letras y símbolos, fue el...", options: ["Código Morse", "Código ASCII", "Código Hollerith", "Código Baudot"], correctIndex: 2 },
+                    { id: 18, text: "El problema conocido como 'face-down nine-edge first' se refería a...", options: ["Un error de sobrecalentamiento", "Un error de programación común", "La forma correcta de insertar las tarjetas", "La máxima capacidad de una tarjeta"], correctIndex: 2 },
+                    { id: 19, text: "Una máquina 'verificadora' (verifier) tenía un propósito fundamental:", options: ["Ordenar las tarjetas alfabéticamente", "Contar el número total de tarjetas", "Comprobar si una tarjeta fue perforada correctamente", "Imprimir el contenido de la tarjeta"], correctIndex: 2 },
+                    { id: 20, text: "¿Qué limitación fundamental tenían los sistemas basados en tarjetas perforadas para el procesamiento de datos?", options: ["Eran demasiado rápidos para los humanos", "Requerían un ambiente estéril", "El procesamiento era secuencial (por lotes)", "No podían almacenar números"], correctIndex: 2 },
+                    { id: 21, text: "En el código Hollerith de 12 filas, las 3 filas superiores (12, 11 y 0) se conocían como...", options: ["Filas de datos", "Filas de paridad", "Filas de zona (zone punches)", "Filas de control"], correctIndex: 2 },
+                    { id: 22, text: "Una perforación en la fila 12 (la superior) combinada con una perforación en la fila 1 representaba la letra...", options: ["A", "J", "S", "1"], correctIndex: 0 },
+                    { id: 23, text: "La máquina IBM 082 Sorter se utilizaba para...", options: ["Mezclar datos de dos mazos", "Clasificar tarjetas según una columna", "Copiar un mazo de tarjetas", "Realizar cálculos aritméticos"], correctIndex: 1 },
+                    { id: 24, text: "El concepto de 'procesamiento por lotes' (batch processing) se originó debido a la naturaleza de los sistemas de tarjetas, donde...", options: ["Los programas se ejecutaban uno tras otro sin intervención", "Se procesaban múltiples tarjetas a la vez", "Los errores se corregían en grupo", "Los datos se dividían en 8 bits"], correctIndex: 0 },
+                    { id: 25, text: "¿Qué significaba el término 'chad' en el contexto de las tarjetas perforadas?", options: ["El programador principal", "Un tipo de error de lectura", "El fragmento de cartulina que se desprendía al perforar", "El panel de control cableado"], correctIndex: 2 },
+                    { id: 26, text: "La computadora Colossus, utilizada para descifrar códigos en la Segunda Guerra Mundial, leía su entrada desde:", options: ["Tarjetas perforadas estándar", "Cinta de papel perforado a alta velocidad", "Un teclado operado por 10 personas", "Discos de aluminio"], correctIndex: 1 },
+                    { id: 27, text: "Una 'reproductora' (reproducer) como la IBM 514 era capaz de:", options: ["Duplicar un mazo completo de tarjetas", "Leer y sumar los valores de las tarjetas", "Interpretar el código y escribirlo en papel", "Verificar la paridad de los datos"], correctIndex: 0 },
+                    { id: 28, text: "El lenguaje de programación FORTRAN, en sus inicios, era famoso por su estricto formato de código basado en...", options: ["Las columnas de la tarjeta perforada", "La velocidad del procesador", "El sistema de archivos FAT16", "La resolución del monitor"], correctIndex: 0 },
+                    { id: 29, text: "Un 'counter' en una máquina tabuladora era un registro electromecánico que podía:", options: ["Girar la tarjeta si estaba al revés", "Incrementar un número al detectar un agujero", "Medir el voltaje del sistema", "Contar las horas de operación"], correctIndex: 1 },
+                    { id: 30, text: "La caída en desuso de las tarjetas perforadas fue acelerada principalmente por la llegada de:", options: ["Computadoras más potentes", "Almacenamiento magnético (cintas y discos)", "Monitores de alta resolución", "Lenguajes de programación de alto nivel"], correctIndex: 1 }
+                ]},
+                { id: "cat02", title: "DOMINIO MAGNÉTICO", questions: [
+                    { id: 1, text: "¿Cuál es el principio físico fundamental que permite el almacenamiento en cintas y discos magnéticos?", options: ["Reflexión de la luz", "Resistencia eléctrica", "Polaridad magnética (Norte/Sur)", "Fisión nuclear"], correctIndex: 2 },
+                    { id: 2, text: "En un disco duro (HDD), ¿cómo se llama el componente que se mueve sobre la superficie para leer o escribir datos?", options: ["El láser", "El cabezal de lectura/escritura", "El motor de giro", "El chip de memoria"], correctIndex: 1 },
+                    { id: 3, text: "Los discos circulares y rígidos dentro de un disco duro donde se almacenan los datos se conocen como...", options: ["Platos (platters)", "Cilindros", "Sectores", "Pistas"], correctIndex: 0 },
+                    { id: 4, text: "El primer disco duro comercial, el IBM 350, tenía un tamaño comparable al de...", options: ["Un teléfono móvil", "Una caja de zapatos", "Dos refrigeradores", "Una tarjeta de crédito"], correctIndex: 2 },
+                    { id: 5, text: "¿Qué ventaja principal ofrecía la cinta magnética sobre las tarjetas perforadas?", options: ["Mayor velocidad de acceso aleatorio", "Mayor durabilidad y reutilización", "Menor costo por bit", "B y C son correctas"], correctIndex: 3 },
+                    { id: 6, text: "¿Cómo se llama el formato de disco flexible de 5.25 pulgadas, famoso en las primeras computadoras personales?", options: ["Disco Zip", "CD-ROM", "Disquete (Floppy Disk)", "Minidisc"], correctIndex: 2 },
+                    { id: 7, text: "La funda protectora de un disquete de 3.5 pulgadas era rígida, a diferencia de la de 5.25 pulgadas que era...", options: ["Metálica", "De madera", "Flexible", "Transparente"], correctIndex: 2 },
+                    { id: 8, text: "Para proteger un disquete contra la escritura accidental, se utilizaba...", options: ["Una contraseña de software", "Una pestaña deslizable o muesca", "Un candado físico", "Un cifrado complejo"], correctIndex: 1 },
+                    { id: 9, text: "El acceso a los datos en una cinta magnética es de tipo...", options: ["Aleatorio (Random)", "Directo", "Secuencial", "Paralelo"], correctIndex: 2 },
+                    { id: 10, text: "A diferencia de la cinta, el acceso a los datos en un disco duro es principalmente de tipo...", options: ["Secuencial", "Aleatorio o directo", "Lineal", "Serial"], correctIndex: 1 },
+                    { id: 11, text: "¿Qué significa el acrónimo 'HDD'?", options: ["High Definition Display", "Hardware Device Driver", "Hard Disk Drive", "Human Data Device"], correctIndex: 2 },
+                    { id: 12, text: "La superficie de un plato de disco duro está dividida en círculos concéntricos llamados...", options: ["Sectores", "Cilindros", "Pistas (Tracks)", "Clusters"], correctIndex: 2 },
+                    { id: 13, text: "A su vez, cada pista de un disco duro se divide en segmentos más pequeños llamados...", options: ["Bloques", "Sectores", "Fragmentos", "Bytes"], correctIndex: 1 },
+                    { id: 14, text: "¿Qué es un 'cilindro' en el contexto de un disco duro con múltiples platos?", options: ["El eje central del disco", "El conjunto de todas las pistas que están en la misma posición en todos los platos", "La carcasa exterior del disco", "Un solo sector de datos"], correctIndex: 1 },
+                    { id: 15, text: "La capacidad típica de un disquete de 3.5 pulgadas de 'Alta Densidad' (HD) era de...", options: ["144 KB", "720 KB", "1.44 MB", "10 MB"], correctIndex: 2 },
+                    { id: 16, text: "El problema del 'aterrizaje del cabezal' (head crash) en un HDD ocurre cuando el cabezal...", options: ["Lee un dato corrupto", "Toca físicamente la superficie del plato", "Se sobrecalienta", "Gira en dirección contraria"], correctIndex: 1 },
+                    { id: 17, text: "Para evitar el 'head crash', los cabezales de un HDD 'flotan' sobre los platos gracias a...", options: ["Un campo de levitación magnética", "Una corriente de aire generada por la rotación", "Resortes de alta precisión", "Un gel lubricante"], correctIndex: 1 },
+                    { id: 18, text: "¿Qué significa el término 'formatear' un disco?", options: ["Limpiar físicamente su superficie", "Crear la estructura de pistas y sectores para un sistema de archivos", "Comprimir todos los datos existentes", "Cifrar el contenido del disco"], correctIndex: 1 },
+                    { id: 19, text: "¿Cuál es la unidad de medida para la velocidad de rotación de los platos de un disco duro?", options: ["Megahertz (MHz)", "Gigabytes por segundo (GB/s)", "Revoluciones Por Minuto (RPM)", "Pulsos por segundo"], correctIndex: 2 },
+                    { id: 20, text: "En los primeros discos duros, la codificación de datos más común, que usaba un bit de reloj por cada bit de dato, era...", options: ["Codificación Manchester", "Modulación de Frecuencia Modificada (MFM)", "Codificación de Longitud Limitada (RLL)", "Codificación NRZ"], correctIndex: 1 },
+                    { id: 21, text: "El 'tiempo de búsqueda' (seek time) en un HDD es el tiempo que tarda el cabezal en...", options: ["Leer un sector completo", "Girar hasta el sector correcto", "Moverse desde su pista actual hasta la pista deseada", "Transferir los datos al buffer"], correctIndex: 2 },
+                    { id: 22, text: "La 'latencia rotacional' es el tiempo que tarda el disco en...", options: ["Arrancar desde cero", "Mover el cabezal a la pista cero", "Girar para que el sector deseado se posicione debajo del cabezal", "Frenar hasta detenerse"], correctIndex: 2 },
+                    { id: 23, text: "La tecnología 'S.M.A.R.T.' en los discos duros sirve para...", options: ["Acelerar la transferencia de datos", "Monitorear la salud del disco y predecir fallos", "Formatear el disco automáticamente", "Comprimir datos en tiempo real"], correctIndex: 1 },
+                    { id: 24, text: "Una unidad de cinta 'streamer', como la QIC o la LTO, se usa principalmente para...", options: ["Ejecutar sistemas operativos", "Juegos de alta velocidad", "Copias de seguridad y archivo de grandes volúmenes de datos", "Almacenamiento en caché"], correctIndex: 2 },
+                    { id: 25, text: "La codificación RLL (Run-Length Limited) fue una mejora sobre MFM porque...", options: ["Era más simple de implementar", "Permitía mayor densidad de datos con menos cambios de flujo", "Usaba menos energía", "Eliminaba la necesidad de un cabezal físico"], correctIndex: 1 },
+                    { id: 26, text: "La fragmentación de archivos en un HDD ocurre cuando...", options: ["Un archivo es demasiado grande para el disco", "Las partes de un archivo se guardan en sectores no contiguos", "El disco se expone a un campo magnético", "El sistema de archivos se corrompe"], correctIndex: 1 },
+                    { id: 27, text: "La 'densidad de área' (areal density) en un HDD se refiere a...", options: ["La cantidad de platos en el disco", "La cantidad de datos que se pueden almacenar por unidad de superficie", "El peso total del disco", "El número de archivos por directorio"], correctIndex: 1 },
+                    { id: 28, text: "El conector de datos de 40 pines, ancho y plano, utilizado por los discos duros durante muchos años fue el...", options: ["USB", "SATA", "IDE (PATA)", "SCSI"], correctIndex: 2 },
+                    { id: 29, text: "El 'interleaving' o entrelazado era una técnica para organizar sectores en una pista para...", options: ["Aumentar la capacidad", "Compensar la lentitud del procesador para que no perdiera el siguiente sector", "Mejorar la corrección de errores", "Reducir el ruido del disco"], correctIndex: 1 },
+                    { id: 30, text: "¿Qué tecnología de grabación, que alinea los bits verticalmente en lugar de horizontalmente, permitió un gran salto en la capacidad de los HDD?", options: ["Grabación Magnética Perpendicular (PMR)", "Grabación Asistida por Calor (HAMR)", "Grabación Magnética Shingled (SMR)", "Grabación de Patrones de Bits (BPR)"], correctIndex: 0 }
+                ]},
+                { id: "cat03", title: "REVOLUCIÓN ÓPTICA", questions: [
+                    { id: 1, text: "¿Qué tecnología utiliza una unidad de CD/DVD para leer los datos del disco?", options: ["Un cabezal magnético", "Una aguja de diamante", "Un rayo láser", "Una corriente de aire"], correctIndex: 2 },
+                    { id: 2, text: "En un disco óptico, la información se almacena en forma de microscópicas hendiduras y zonas planas llamadas...", options: ["Bits y Bytes", "Pistas y Sectores", "Pits y Lands", "Circuitos y Transistores"], correctIndex: 2 },
+                    { id: 3, text: "El formato 'Compact Disc' (CD) fue originalmente desarrollado y comercializado para almacenar...", options: ["Videojuegos", "Software de oficina", "Audio digital de alta fidelidad", "Bases de datos gubernamentales"], correctIndex: 2 },
+                    { id: 4, text: "La sigla CD-ROM significa...", options: ["Compact Disc - Recordable On Memory", "Compact Disc - Read-Only Memory", "Compact Disc - Random-Order Memory", "Compact Disc - Rewriteable Optical Medium"], correctIndex: 1 },
+                    { id: 5, text: "¿Qué formato sucedió al CD, ofreciendo una capacidad mucho mayor y siendo el estándar para las películas en definición estándar?", options: ["Blu-ray", "DVD (Digital Versatile Disc)", "Disquete Zip", "MiniDisc"], correctIndex: 1 },
+                    { id: 6, text: "Un disco marcado como CD-R se diferencia de un CD-RW en que el CD-R...", options: ["Tiene mayor capacidad", "Solo se puede grabar una vez", "Es mucho más rápido", "Se puede borrar y reescribir"], correctIndex: 1 },
+                    { id: 7, text: "El proceso de grabar datos en un disco óptico grabable se conoce comúnmente como...", options: ["Imprimir", "Cargar", "Quemar (Burning)", "Vaporizar"], correctIndex: 2 },
+                    { id: 8, text: "El disco Blu-ray debe su nombre al color del láser que utiliza para leer y escribir, que es de color...", options: ["Rojo", "Verde", "Infrarrojo", "Azul-violeta"], correctIndex: 3 },
+                    { id: 9, text: "La principal ventaja del láser azul-violeta del Blu-ray sobre el láser rojo del DVD es que...", options: ["Usa menos energía", "Tiene una longitud de onda más corta, permitiendo enfocar en 'pits' más pequeños", "Es visible para el ojo humano", "No genera calor"], correctIndex: 1 },
+                    { id: 10, text: "La capacidad de almacenamiento de un CD-ROM estándar es de aproximadamente...", options: ["1.44 MB", "100 MB", "700 MB", "4.7 GB"], correctIndex: 2 },
+                    { id: 11, text: "La capacidad de almacenamiento de un DVD de una sola capa y una sola cara es de aproximadamente...", options: ["700 MB", "1.4 GB", "4.7 GB", "25 GB"], correctIndex: 2 },
+                    { id: 12, text: "La capacidad de almacenamiento de un disco Blu-ray de una sola capa es de aproximadamente...", options: ["4.7 GB", "9.4 GB", "25 GB", "50 GB"], correctIndex: 2 },
+                    { id: 13, text: "¿Cómo funciona un disco CD-RW (ReWritable)?", options: ["Usa un láser que crea agujeros permanentes", "Utiliza un material de cambio de fase que puede alternar entre estados cristalino y amorfo", "Usa una capa magnética que se polariza", "Usa tinta que cambia de color"], correctIndex: 1 },
+                    { id: 14, text: "La especificación técnica para los CDs de Audio se conoce como...", options: ["Libro Amarillo (Yellow Book)", "Libro Verde (Green Book)", "Libro Rojo (Red Book)", "Libro Azul (Blue Book)"], correctIndex: 2 },
+                    { id: 15, text: "A diferencia de un disco de vinilo, la espiral de datos en un CD se lee...", options: ["De afuera hacia adentro", "En círculos aleatorios", "De adentro hacia afuera", "En líneas rectas del centro al borde"], correctIndex: 2 },
+                    { id: 16, text: "Un DVD-9 es un disco que tiene...", options: ["9 Gigabytes de capacidad", "Doble capa en una sola cara", "Doble cara con una sola capa cada una", "9 pistas de audio"], correctIndex: 1 },
+                    { id: 17, text: "El sistema de archivos estándar utilizado para los discos CD-ROM se llama...", options: ["FAT32", "NTFS", "ISO 9660", "ext4"], correctIndex: 2 },
+                    { id: 18, text: "La tecnología que permitía 'imprimir' una etiqueta directamente sobre la superficie del disco usando el mismo láser de la unidad se llamaba...", options: ["DiscT@2", "LightScribe", "LabelFlash", "B y C son correctas"], correctIndex: 3 },
+                    { id: 19, text: "¿Qué significaba 'finalizar' un disco CD-R o DVD-R?", options: ["Formatearlo para borrar su contenido", "Escribir la Tabla de Contenidos (TOC) para hacerlo legible en unidades estándar", "Añadir una capa protectora física", "Expulsarlo de la unidad"], correctIndex: 1 },
+                    { id: 20, text: "¿Por qué un CD de audio estándar tiene un límite de tiempo de aproximadamente 74-80 minutos?", options: ["Era la duración de la 9ª Sinfonía de Beethoven", "Era una limitación física de los primeros láseres", "Era una decisión de marketing de las discográficas", "A y B son correctas y se convirtió en parte del estándar"], correctIndex: 3 },
+                    { id: 21, text: "La especificación técnica para los CD-ROM (datos) se conoce como...", options: ["Libro Rojo (Red Book)", "Libro Naranja (Orange Book)", "Libro Blanco (White Book)", "Libro Amarillo (Yellow Book)"], correctIndex: 3 },
+                    { id: 22, text: "El sistema de corrección de errores utilizado en los CDs, fundamental para su robustez, se llama...", options: ["Paridad de Hamming", "CRC32", "Código Reed-Solomon de entrelazado cruzado (CIRC)", "Checksum MD5"], correctIndex: 2 },
+                    { id: 23, text: "La velocidad de una unidad de CD-ROM (24x, 52x) es un múltiplo de la velocidad de lectura de un CD de audio original, que era de...", options: ["150 KB/s", "1.5 MB/s", "720 KB/s", "100 KB/s"], correctIndex: 0 },
+                    { id: 24, text: "La 'Apertura Numérica' (NA) de la lente de una unidad óptica se refiere a su capacidad para...", options: ["Resistir altas temperaturas", "Girar a altas velocidades", "Captar la luz y enfocarla en un punto pequeño", "Almacenar datos temporalmente"], correctIndex: 2 },
+                    { id: 25, text: "Un disco DVD-RAM era diferente de un DVD-RW porque...", options: ["No era regrabable", "Usaba un láser verde", "No necesitaba software especial para arrastrar y soltar archivos, como un HDD", "Tenía una capacidad mucho menor"], correctIndex: 2 },
+                    { id: 26, text: "La estructura de un disco Blu-ray de Doble Capa (50 GB) consiste en...", options: ["Dos discos pegados uno sobre otro", "Dos caras, una para cada capa", "Una segunda capa de datos sobre la primera, legible ajustando el foco del láser", "Una espiral de datos mucho más ancha"], correctIndex: 2 },
+                    { id: 27, text: "El 'Book Type' es un ajuste en algunas grabadoras de DVD que permitía 'engañar' a los reproductores viejos para que...", options: ["Leyesen más rápido", "Aceptaran un disco DVD+R como si fuera un DVD-ROM prensado", "Reprodujeran CDs de audio", "Ignoraran los códigos de región"], correctIndex: 1 },
+                    { id: 28, text: "La tecnología 'Mt. Rainier' (EasyWrite) fue un estándar para hacer que la escritura en discos CD-RW fuera...", options: ["Permanente e imborrable", "Más rápida que la lectura", "Nativa en el sistema operativo, sin necesidad de 'quemadores'", "Compatible solo con hardware de Apple"], correctIndex: 2 },
+                    { id: 29, text: "Un disco UMD (Universal Media Disc), usado por la PlayStation Portable de Sony, era esencialmente...", options: ["Un tipo de tarjeta de memoria", "Un pequeño disco óptico dentro de un cartucho", "Un disco duro en miniatura", "Una memoria flash con forma de disco"], correctIndex: 1 },
+                    { id: 30, text: "A pesar de la mayor capacidad, los discos Blu-ray son más resistentes a los arañazos que los DVDs gracias a...", options: ["Una capa de datos más profunda", "Una capa protectora 'hard-coat' mucho más dura", "Una carcasa de titanio", "Un campo de fuerza electrostático"], correctIndex: 1 }
+                ]},
+                { id: "cat04", title: "ERA DEL ESTADO SÓLIDO", questions: [
+                    { id: 1, text: "¿Cuál es la característica principal de un Dispositivo de Estado Sólido (SSD) que lo diferencia de un HDD?", options: ["Usa láser para leer datos", "No tiene partes móviles", "Es siempre de mayor capacidad", "Es de forma redonda"], correctIndex: 1 },
+                    { id: 2, text: "La tecnología de memoria fundamental utilizada en la mayoría de los SSDs y pendrives se llama...", options: ["Memoria RAM dinámica (DRAM)", "Memoria de solo lectura (ROM)", "Memoria Flash NAND", "Memoria de burbuja"], correctIndex: 2 },
+                    { id: 3, text: "¿Qué componente de un SSD actúa como su 'cerebro', gestionando dónde se almacenan los datos y la salud de las celdas?", options: ["El chip de memoria caché", "El conector SATA", "El controlador", "La carcasa de aluminio"], correctIndex: 2 },
+                    { id: 4, text: "Un 'pendrive', 'memoria USB' o 'flash drive' es esencialmente una versión más pequeña y portátil de la tecnología...", options: ["De disco duro (HDD)", "De disco óptico (CD)", "De estado sólido (SSD)", "De cinta magnética"], correctIndex: 2 },
+                    { id: 5, text: "La principal ventaja de un SSD sobre un HDD en el uso diario de una computadora es...", options: ["Su menor costo por gigabyte", "Su mayor vida útil teórica", "Su drásticamente mayor velocidad de acceso y transferencia", "Su mayor peso que da estabilidad"], correctIndex: 2 },
+                    { id: 6, text: "Las tarjetas de memoria como SD o microSD, usadas en cámaras y teléfonos, son un tipo de...", options: ["Memoria volátil (RAM)", "Almacenamiento óptico", "Memoria Flash (estado sólido)", "Almacenamiento magnético"], correctIndex: 2 },
+                    { id: 7, text: "A diferencia de la RAM, la memoria Flash NAND es 'no volátil', lo que significa que...", options: ["Nunca falla", "No se puede reescribir", "Conserva los datos incluso sin energía eléctrica", "Es transparente a la luz"], correctIndex: 2 },
+                    { id: 8, text: "El proceso de borrar y reescribir datos en una celda de memoria Flash causa un pequeño...", options: ["Aumento de capacidad", "Desgaste que limita su vida útil", "Aumento de la temperatura global", "Ruido audible"], correctIndex: 1 },
+                    { id: 9, text: "El conector moderno y compacto que permite a los SSDs alcanzar velocidades mucho mayores que el antiguo SATA se llama...", options: ["IDE", "SCSI", "NVMe (usando un slot M.2)", "USB 2.0"], correctIndex: 2 },
+                    { id: 10, text: "¿Qué es la 'memoria caché' (generalmente DRAM) en un SSD?", options: ["El lugar donde se guardan los datos permanentemente", "Una memoria extremadamente rápida para almacenar datos de acceso frecuente y operaciones internas", "La parte que se conecta a la placa base", "Un tipo de batería de respaldo"], correctIndex: 1 },
+                    { id: 11, text: "Las celdas de memoria Flash se organizan en 'páginas', y estas a su vez se agrupan en...", options: ["Sectores", "Bloques", "Cilindros", "Pistas"], correctIndex: 1 },
+                    { id: 12, text: "Una limitación de la memoria NAND es que se puede escribir en 'páginas' individuales, pero solo se puede borrar en...", options: ["Bits individuales", "Bloques enteros", "Sectores aleatorios", "La unidad completa"], correctIndex: 1 },
+                    { id: 13, text: "La celda Flash que almacena 1 bit por celda, siendo la más rápida y duradera, se llama...", options: ["MLC (Multi-Level Cell)", "TLC (Triple-Level Cell)", "QLC (Quad-Level Cell)", "SLC (Single-Level Cell)"], correctIndex: 3 },
+                    { id: 14, text: "A medida que se almacenan más bits por celda (de SLC a QLC), la densidad aumenta, pero ¿qué disminuye?", options: ["El costo por gigabyte", "El rendimiento (velocidad) y la durabilidad (ciclos P/E)", "El tamaño físico", "La compatibilidad"], correctIndex: 1 },
+                    { id: 15, text: "La función del controlador de un SSD que distribuye las escrituras uniformemente por todas las celdas se llama...", options: ["Garbage Collection", "TRIM", "Wear Leveling (Nivelación de desgaste)", "Over-provisioning"], correctIndex: 2 },
+                    { id: 16, text: "El comando 'TRIM' que un sistema operativo envía a un SSD sirve para...", options: ["Formatear la unidad", "Informar al controlador qué bloques ya no contienen datos válidos y pueden ser borrados", "Aumentar la velocidad del reloj del controlador", "Cifrar la unidad"], correctIndex: 1 },
+                    { id: 17, text: "El 'Garbage Collection' (recolección de basura) en un SSD es el proceso interno de...", options: ["Eliminar virus y malware", "Compactar páginas válidas en nuevos bloques para poder borrar los antiguos", "Borrar el historial de navegación", "Comprimir archivos viejos"], correctIndex: 1 },
+                    { id: 18, text: "El 'Over-provisioning' se refiere a una porción del SSD reservada y no visible para el usuario, utilizada para...", options: ["Almacenar el sistema operativo", "Reemplazar celdas gastadas y ayudar en operaciones internas", "Guardar una copia de seguridad", "Funcionar como memoria caché"], correctIndex: 1 },
+                    { id: 19, text: "El 'factor de forma' de un SSD se refiere a su...", options: ["Capacidad de almacenamiento", "Velocidad de lectura/escritura", "Tamaño y forma física (ej: 2.5 pulgadas, M.2, U.2)", "Versión de firmware"], correctIndex: 2 },
+                    { id: 20, text: "¿Qué significa el acrónimo NVMe?", options: ["New Virtual Memory Engine", "Non-Volatile Memory Express", "Next-gen Video Memory Extension", "Network-Verified Memory"], correctIndex: 1 },
+                    { id: 21, text: "La tecnología 3D NAND fue un gran avance porque permitió...", options: ["Hacer los SSDs transparentes", "Apilar las capas de celdas de memoria verticalmente, aumentando la densidad", "Que los SSDs funcionaran sin controlador", "Utilizar la luz en lugar de la electricidad"], correctIndex: 1 },
+                    { id: 22, text: "En una celda Flash NAND, un electrón es forzado a través de una capa de óxido y queda atrapado en una...", options: ["Puerta flotante (Floating Gate)", "Capa magnética", "Burbuja de plasma", "Resistencia variable"], correctIndex: 0 },
+                    { id: 23, text: "La 'amplificación de escritura' (Write Amplification Factor - WAF) es un fenómeno en los SSD donde...", options: ["La velocidad de escritura aumenta con el tiempo", "Se escriben físicamente más datos de los que el usuario solicitó, debido a la gestión interna", "Los datos se duplican para mayor seguridad", "El SSD se calienta al escribir"], correctIndex: 1 },
+                    { id: 24, text: "Un SSD sin caché DRAM (DRAM-less) a menudo utiliza una tecnología llamada HMB (Host Memory Buffer) que...", options: ["Elimina la necesidad de caché por completo", "Usa una pequeña porción de la RAM principal del sistema como caché", "Usa una parte de la propia NAND como caché", "Se basa en un búfer en la CPU"], correctIndex: 1 },
+                    { id: 25, text: "La interfaz SATA 3, muy común en SSDs de 2.5 pulgadas, tiene un límite de velocidad teórico de...", options: ["300 MB/s", "600 MB/s (6 Gbit/s)", "1000 MB/s", "Varía según la capacidad"], correctIndex: 1 },
+                    { id: 26, text: "Un SSD en factor de forma M.2 puede utilizar dos protocolos diferentes: el más lento... y el más rápido...", options: ["USB y FireWire", "IDE y SCSI", "SATA y NVMe", "Ethernet y Wi-Fi"], correctIndex: 2 },
+                    { id: 27, text: "La durabilidad de un SSD se mide a menudo en 'TBW', que significa...", options: ["Total Bytes Written", "Terabytes Written", "Time Before Wearout", "Typical Byte Workload"], correctIndex: 1 },
+                    { id: 28, text: "El fenómeno de 'lectura perturbada' (read disturb) ocurre cuando leer repetidamente una celda puede causar...", options: ["Que la celda se borre", "Un cambio de voltaje no intencionado en celdas vecinas", "Que el SSD se reinicie", "Que la velocidad de lectura disminuya permanentemente"], correctIndex: 1 },
+                    { id: 29, text: "Las memorias 'Optane' de Intel (basadas en 3D XPoint) eran diferentes a NAND porque ofrecían...", options: ["Menor costo y mayor capacidad", "Mayor latencia pero más durabilidad", "Latencia mucho menor (más rápidas) y mayor durabilidad", "Funcionamiento sin electricidad"], correctIndex: 2 },
+                    { id: 30, text: "¿Qué indica un valor WAF (Write Amplification Factor) de 1?", options: ["El SSD está fallando", "El estado ideal: por cada byte que el host envía, solo un byte se escribe en la NAND", "La escritura es extremadamente lenta", "El SSD está completamente lleno"], correctIndex: 1 }
+                ]},
+                { id: "cat05", title: "FUNDAMENTOS: BIT A YOTTABYTE", questions: [
+                    { id: 1, text: "¿Cuál es la unidad de información digital más pequeña, que puede tener un valor de 0 o 1?", options: ["Byte", "Bit", "Hertz", "Pixel"], correctIndex: 1 },
+                    { id: 2, text: "Por convención, un 'Byte' se compone de ¿cuántos 'bits'?", options: ["4", "16", "8", "1024"], correctIndex: 2 },
+                    { id: 3, text: "¿Qué unidad sigue inmediatamente después del Kilobyte (KB) en la escala de tamaño?", options: ["Gigabyte (GB)", "Terabyte (TB)", "Bit", "Megabyte (MB)"], correctIndex: 3 },
+                    { id: 4, text: "Un archivo de música MP3 suele medirse en...", options: ["Bytes", "Kilobytes (KB)", "Megabytes (MB)", "Gigabytes (GB)"], correctIndex: 2 },
+                    { id: 5, text: "La capacidad de un disco duro moderno o un SSD se mide comúnmente en...", options: ["Kilobytes (KB) o Megabytes (MB)", "Gigabytes (GB) o Terabytes (TB)", "Bits", "Megabits (Mb)"], correctIndex: 1 },
+                    { id: 6, text: "Ordena las siguientes unidades de MENOR a MAYOR: Gigabyte, Kilobyte, Megabyte.", options: ["GB, KB, MB", "KB, MB, GB", "MB, GB, KB", "KB, GB, MB"], correctIndex: 1 },
+                    { id: 7, text: "Si un Byte son 8 bits, ¿cuántos bits hay en un Kilobyte (asumiendo 1 KB = 1024 Bytes)?", options: ["8000 bits", "1024 bits", "8192 bits", "1000 bits"], correctIndex: 2 },
+                    { id: 8, text: "¿Qué significa el prefijo 'Kilo' en Kilobyte (KB) en el contexto de la memoria de una computadora?", options: ["Exactamente 1,000", "Exactamente 1,024", "Cien", "Un millón"], correctIndex: 1 },
+                    { id: 9, text: "¿Qué significa el prefijo 'Mega' en Megabyte (MB)?", options: ["1024 Kilobytes", "1000 Gigabytes", "1024 bits", "1000 Bytes"], correctIndex: 0 },
+                    { id: 10, text: "¿Cuál de estas unidades es la más grande?", options: ["Gigabyte (GB)", "Petabyte (PB)", "Megabyte (MB)", "Terabyte (TB)"], correctIndex: 1 },
+                    { id: 11, text: "Los sistemas operativos (como Windows) miden la capacidad usando el sistema binario (1 KB = 1024 B). Los fabricantes de discos a menudo usan el sistema decimal (1 KB = 1000 B). ¿Qué efecto tiene esto?", options: ["El disco parece tener MÁS capacidad en Windows", "No tiene ningún efecto visible", "El disco parece tener MENOS capacidad en Windows de la que anuncia la caja", "Hace que el disco sea más rápido"], correctIndex: 2 },
+                    { id: 12, text: "La unidad 'Kibibyte' (KiB) fue creada para eliminar la ambigüedad y representa inequívocamente...", options: ["1000 bytes", "1024 bits", "1024 bytes", "1000 bits"], correctIndex: 2 },
+                    { id: 13, text: "Si un fabricante vende un disco de '500 GB' (quinientos mil millones de bytes), ¿aproximadamente cuántos GiB (Gibibytes) mostrará Windows?", options: ["500 GiB", "512 GiB", "465 GiB", "488 GiB"], correctIndex: 2 },
+                    { id: 14, text: "Un Terabyte (TB) equivale a 1024...", options: ["Megabytes (MB)", "Kilobytes (KB)", "Bytes", "Gigabytes (GB)"], correctIndex: 3 },
+                    { id: 15, text: "¿Qué unidad es 1024 veces más grande que un Petabyte (PB)?", options: ["Zettabyte (ZB)", "Exabyte (EB)", "Yottabyte (YB)", "Terabyte (TB)"], correctIndex: 1 },
+                    { id: 16, text: "La velocidad de una conexión a internet se mide comúnmente en Megabits por segundo (Mbps). Si tu velocidad es de 100 Mbps, ¿cuál es la velocidad de descarga teórica máxima en Megabytes por segundo (MB/s)?", options: ["100 MB/s", "800 MB/s", "12.5 MB/s", "10.24 MB/s"], correctIndex: 2 },
+                    { id: 17, text: "La letra 'b' minúscula en 'Kbps' o 'Mbps' significa...", options: ["bytes", "bloques", "bits", "baudios"], correctIndex: 2 },
+                    { id: 18, text: "La letra 'B' mayúscula en 'KB/s' o 'MB/s' significa...", options: ["Bits", "Bytes", "Base", "Binario"], correctIndex: 1 },
+                    { id: 19, text: "Un 'nibble' o 'semiocteto' es un conjunto de...", options: ["2 bits", "16 bits", "8 bits", "4 bits"], correctIndex: 3 },
+                    { id: 20, text: "Un número de 32 bits puede representar 2^32 valores posibles. Un número de 64 bits puede representar...", options: ["El doble (2*2^32)", "2^32 valores adicionales", "2^32 veces más valores (2^64)", "La mitad (2^16)"], correctIndex: 2 },
+                    { id: 21, text: "El prefijo 'Zetta' (como en Zettabyte) representa 10 elevado a la potencia...", options: ["15", "18", "21", "24"], correctIndex: 2 },
+                    { id: 22, text: "El prefijo binario para 'Mega' (1024^2) es 'Mebi'. ¿Cuál es el prefijo binario para 'Giga' (1024^3)?", options: ["Gigabi (GiB)", "Gibibit (Gib)", "Gibibyte (GiB)", "Geobyte (GeB)"], correctIndex: 2 },
+                    { id: 23, text: "Para representar un solo carácter en el código ASCII extendido se necesita...", options: ["1 bit", "1 nibble (4 bits)", "1 Byte (8 bits)", "1 Kilobyte"], correctIndex: 2 },
+                    { id: 24, text: "La totalidad del contenido de internet a mediados de la década de 2020 se estima en el orden de los...", options: ["Petabytes", "Exabytes", "Zettabytes", "Yottabytes"], correctIndex: 2 },
+                    { id: 25, text: "¿Cuántos bits se necesitan para direccionar de forma única 4 GB de memoria RAM?", options: ["16 bits", "32 bits", "24 bits", "64 bits"], correctIndex: 1 },
+                    { id: 26, text: "Un archivo de video 4K sin comprimir puede consumir varios Gigabytes por minuto. Esto se debe a la gran cantidad de datos necesarios para definir...", options: ["El color y brillo de cada píxel para cada fotograma", "La banda sonora en alta fidelidad", "Los subtítulos en múltiples idiomas", "Los créditos de la película"], correctIndex: 0 },
+                    { id: 27, text: "La palabra 'Tebibyte' (TiB) se refiere a...", options: ["Exactamente un billón de bytes", "1000 Terabytes", "1024 Gigabytes (lo que a menudo se llama Terabyte)", "1024 Gibibytes (2^40 bytes)"], correctIndex: 3 },
+                    { id: 28, text: "Si un disco duro de 1 TB (1 billón de bytes) cuesta $50, ¿cuál es el costo por Gigabyte (decimal)?", options: ["$0.50", "$5", "$0.05", "$0.20"], correctIndex: 2 },
+                    { id: 29, text: "En la arquitectura de computadoras, la 'palabra' (word) se refiere a...", options: ["Un conjunto de 16 bits siempre", "La unidad natural de datos utilizada por un diseño de CPU particular (ej: 32 o 64 bits)", "El comando de 'guardar'", "Un sinónimo de Byte"], correctIndex: 1 },
+                    { id: 30, text: "El prefijo 'Yotta' (como en Yottabyte), el más grande oficialmente reconocido, representa 10 elevado a la potencia...", options: ["21", "27", "30", "24"], correctIndex: 3 }
+                ]},
+                { id: "cat06", title: "LÓGICA DE CAPACIDAD Y CÁLCULO", questions: [
+                    { id: 1, text: "Tengo una foto de 3 Megabytes (MB). ¿Puedo guardarla en un disquete de 1.44 MB?", options: ["Sí, sin problemas", "No, el archivo es más grande que la capacidad del disquete", "Sí, pero ocupará todo el espacio", "Solo si la comprimo"], correctIndex: 1 },
+                    { id: 2, text: "Un pendrive tiene 4 Gigabytes (GB) de espacio libre. ¿Cuántas canciones de 4 MB en promedio puedes almacenar?", options: ["Aproximadamente 100", "Aproximadamente 1000", "Aproximadamente 4000", "Aproximadamente 10"], correctIndex: 1 },
+                    { id: 3, text: "¿Qué dispositivo tiene MAYOR capacidad? Un CD-ROM de 700 MB o un pendrive de 1 GB.", options: ["Ambos tienen la misma capacidad", "El CD-ROM", "El pendrive", "Es imposible determinarlo"], correctIndex: 2 },
+                    { id: 4, text: "Quieres grabar una película de 6 Gigabytes (GB) en un DVD. Un DVD estándar de una capa tiene 4.7 GB. ¿Es posible?", options: ["Sí, el DVD tiene capacidad de sobra", "Sí, si se graba a baja velocidad", "No, la película excede la capacidad del DVD", "Solo si el DVD es regrabable (RW)"], correctIndex: 2 },
+                    { id: 5, text: "Tienes una colección de documentos que ocupa 500 Megabytes (MB). ¿Cabe en un CD-ROM de 700 MB?", options: ["No, es demasiado grande", "Apenas cabe", "Sí, y sobra espacio", "No, los CDs no guardan documentos"], correctIndex: 2 },
+                    { id: 6, text: "Un videojuego moderno requiere 80 Gigabytes (GB) de espacio en disco. Tu SSD tiene 0.1 Terabytes (TB) libres. ¿Puedes instalarlo?", options: ["Sí (0.1 TB son 100 GB)", "No (0.1 TB son 10 GB)", "No, los SSD no son para juegos", "Es exactamente el mismo tamaño"], correctIndex: 0 },
+                    { id: 7, text: "Si un video de 1 minuto ocupa 100 MB, ¿cuánto espacio ocupará un video de 10 minutos con la misma calidad?", options: ["100 MB", "500 MB", "1000 MB (1 GB)", "No se puede saber"], correctIndex: 2 },
+                    { id: 8, text: "Has descargado 2 archivos, uno de 800 MB y otro de 300 MB. ¿El total (1100 MB) cabe en un pendrive de 1 GB?", options: ["No, 1 GB son 1024 MB, y 1100 es mayor", "Sí, 1 GB son 1200 MB", "Sí, sin problemas", "No, los pendrives no admiten archivos tan grandes"], correctIndex: 0 },
+                    { id: 9, text: "Necesitas hacer una copia de seguridad de 3 GB de fotos. ¿Cuál es la opción más económica en términos de cantidad de discos?", options: ["Usar 5 CDs de 700 MB", "Usar 1 DVD de 4.7 GB", "Usar 3 discos de 1 GB", "Usar 2 disquetes"], correctIndex: 1 },
+                    { id: 10, text: "Un sistema operativo indica que un disco de '1 TB' tiene solo '931 GB' de capacidad. ¿Está el disco defectuoso?", options: ["Sí, le faltan 69 GB", "Sí, es un error del sistema", "No, es la diferencia entre el cálculo decimal del fabricante (TB) y el binario del SO (GiB)", "No, el sistema operativo ocupa esos 69 GB"], correctIndex: 2 },
+                    { id: 11, text: "Una tarjeta de memoria de 64 GB está llena. ¿Cuántos DVDs de 4.7 GB necesitarías para respaldar toda la información?", options: ["Unos 7 DVDs", "Unos 10 DVDs", "Unos 14 DVDs", "Unos 20 DVDs"], correctIndex: 2 },
+                    { id: 12, text: "Un servicio en la nube te ofrece 5 GB de almacenamiento gratuito. Si tus fotos pesan 2.5 MB cada una, ¿cuántas puedes subir?", options: ["Aproximadamente 200", "Aproximadamente 1000", "Aproximadamente 2000", "Aproximadamente 5000"], correctIndex: 2 },
+                    { id: 13, text: "Quieres grabar una película 4K que ocupa 45 GB. ¿Cuál de estos medios es adecuado?", options: ["Un DVD de doble capa (8.5 GB)", "Un CD-ROM (700 MB)", "Un Blu-ray de doble capa (50 GB)", "Un disquete de 1.44 MB"], correctIndex: 2 },
+                    { id: 14, text: "Un disco duro externo de 2 TB tiene un 25% de su espacio ocupado. ¿Cuántos GB están libres?", options: ["250 GB", "500 GB", "1500 GB", "750 GB"], correctIndex: 2 },
+                    { id: 15, text: "Si tu conexión a internet descarga a 25 MB/s (Megabytes por segundo), ¿cuánto tardarás aproximadamente en descargar un archivo de 1.5 GB?", options: ["1 minuto", "30 segundos", "25 minutos", "2.5 minutos"], correctIndex: 0 },
+                    { id: 16, text: "Tienes 2000 archivos de texto, cada uno de 512 KB. ¿Cuánto espacio ocupan en total?", options: ["1024 KB", "10240 MB", "1 GB (1024 MB)", "512 GB"], correctIndex: 2 },
+                    { id: 17, text: "Un disco duro tiene 512 bytes por sector. ¿Cuántos sectores ocupa un archivo de 1 KB?", options: ["1 sector", "2 sectores", "Medio sector", "4 sectores"], correctIndex: 1 },
+                    { id: 18, text: "Una biblioteca de 100 videojuegos de 50 GB cada uno requiere un almacenamiento total de...", options: ["500 GB", "5 TB", "50 TB", "150 GB"], correctIndex: 1 },
+                    { id: 19, text: "Un archivo comprimido ZIP ocupa 750 MB. Al descomprimirlo, su tamaño es de 2.25 GB. ¿Cuál es el ratio de compresión aproximado?", options: ["2:1", "3:1", "1:3", "1:2"], correctIndex: 1 },
+                    { id: 20, text: "¿Qué ocupa más espacio? ¿Un archivo de 1.2 GB o un archivo de 1,300,000 KB?", options: ["El de 1.2 GB", "Ambos son casi iguales", "El de 1,300,000 KB", "Es imposible compararlos"], correctIndex: 2 },
+                    { id: 21, text: "Tu SSD de 256 GB tiene un 10% de 'over-provisioning' invisible para ti. ¿Cuál es su capacidad NAND total aproximada?", options: ["256 GB", "230 GB", "281 GB", "300 GB"], correctIndex: 2 },
+                    { id: 22, text: "Un centro de datos necesita almacenar 4 Petabytes (PB) de información. ¿Cuántos discos duros de 16 TB necesitará como mínimo?", options: ["25", "100", "400", "250"], correctIndex: 3 },
+                    { id: 23, text: "Un archivo de video se transmite a 8 Mbps (megabits por segundo). ¿Cuánto espacio en MB (Megabytes) consumirá una hora de transmisión?", options: ["8 MB", "3600 MB (3.6 GB)", "64 MB", "480 MB"], correctIndex: 1 },
+                    { id: 24, text: "Un sistema de archivos tiene un tamaño de 'cluster' de 4 KB. Si guardas un archivo de 1 KB, ¿cuánto espacio ocupará realmente en el disco?", options: ["1 KB", "0 KB, porque es muy pequeño", "4 KB (el tamaño de un cluster)", "5 KB"], correctIndex: 2 },
+                    { id: 25, text: "Debido al 'espacio de holgura' (slack space) del problema anterior, guardar 1000 archivos de 1 byte cada uno ocupará en disco...", options: ["1000 bytes", "1 KB", "4000 KB (4 MB)", "Nada"], correctIndex: 2 },
+                    { id: 26, text: "Un disco duro de 1 TB (10^12 bytes) es particionado en Windows. El sistema de archivos NTFS reserva ~12.5% para su MFT y metadatos. ¿Cuál es el espacio útil aproximado?", options: ["1000 GB", "931 GiB", "815 GiB", "125 GiB"], correctIndex: 2 },
+                    { id: 27, text: "Para almacenar 1 TiB (Tebibyte) de datos, necesitas 1024 GiB. ¿Cuántos MB son en total?", options: ["1,048,576 MB", "1,000,000 MB", "1,024,000 MB", "2,048,000 MB"], correctIndex: 0 },
+                    { id: 28, text: "Un backup completo de una base de datos es de 2.3 TiB. La política de retención exige guardar 30 backups. ¿Qué capacidad de almacenamiento se necesita?", options: ["~70 TB", "~77 TB", "~69 TB", "~90 TB"], correctIndex: 1 },
+                    { id: 29, text: "Una imagen RAW de una cámara de alta resolución ocupa 150 MB. ¿Cuántas imágenes caben en una tarjeta de memoria de 256 GB (binarios)?", options: ["Aproximadamente 1700", "Aproximadamente 1740", "Aproximadamente 2560", "Aproximadamente 1500"], correctIndex: 1 },
+                    { id: 30, text: "Un Yottabyte (YB) son 1024 Zettabytes (ZB). ¿A cuántos Terabytes (TB) equivale un Yottabyte?", options: ["Un millón de TB", "Mil millones de TB", "Un billón de TB (1024^4)", "Un trillón de TB"], correctIndex: 2 }
+                ]},
+                { id: "cat07", title: "SISTEMAS DE ARCHIVOS Y ORGANIZACIÓN", questions: [
+                    { id: 1, text: "¿Qué es un 'sistema de archivos'?", options: ["El hardware que lee los discos", "Un conjunto de programas para editar texto", "La estructura lógica que un SO usa para controlar cómo se guardan y recuperan los datos", "La carcasa física de un disco duro"], correctIndex: 2 },
+                    { id: 2, text: "En una analogía con una biblioteca, el sistema de archivos sería...", options: ["Los libros individuales", "El edificio de la biblioteca", "El catálogo de fichas que dice dónde está cada libro", "El bibliotecario"], correctIndex: 2 },
+                    { id: 3, text: "¿Qué significa el acrónimo FAT, uno de los primeros sistemas de archivos populares?", options: ["Fast Access Table", "File Allocation Table", "Format All Text", "File Attribute Text"], correctIndex: 1 },
+                    { id: 4, text: "La acción de preparar un disco con un sistema de archivos nuevo se llama...", options: ["Compilar", "Formatear", "Desfragmentar", "Comprimir"], correctIndex: 1 },
+                    { id: 5, text: "El sistema de archivos estándar y más moderno para las versiones actuales de Windows se llama...", options: ["HFS+", "ext4", "NTFS", "FAT32"], correctIndex: 2 },
+                    { id: 6, text: "El sistema de archivos utilizado por defecto en la mayoría de las distribuciones de Linux es...", options: ["APFS", "NTFS", "ext4", "FAT32"], correctIndex: 2 },
+                    { id: 7, text: "El sistema de archivos moderno utilizado en todos los dispositivos de Apple (iPhone, Mac) se llama...", options: ["Apple File System (APFS)", "Mac OS Extended (HFS+)", "Windows File System", "iOS Storage"], correctIndex: 0 },
+                    { id: 8, text: "Una de las limitaciones más conocidas del sistema de archivos FAT32 es...", options: ["No poder crear carpetas", "No poder usarse en pendrives", "Un tamaño máximo de archivo de solo 4 GB", "Una capacidad máxima de disco de 1 MB"], correctIndex: 2 },
+                    { id: 9, text: "La 'fragmentación' ocurre cuando...", options: ["El disco se rompe físicamente", "Las diferentes partes de un mismo archivo se almacenan en lugares no contiguos del disco", "El sistema de archivos se borra", "Se alcanza el límite de archivos"], correctIndex: 1 },
+                    { id: 10, text: "¿Qué hace una herramienta de 'desfragmentación'?", options: ["Borra archivos innecesarios", "Comprime los archivos para que ocupen menos", "Reorganiza los fragmentos de los archivos para que sean contiguos", "Repara sectores físicos dañados"], correctIndex: 2 },
+                    { id: 11, text: "¿Para qué tipo de dispositivos es más adecuado el sistema de archivos exFAT?", options: ["Discos de sistema de Windows", "Servidores Linux de alto rendimiento", "Unidades extraíbles grandes (pendrives, tarjetas SD) para compatibilidad entre Mac y Windows", "Discos ópticos (CD/DVD)"], correctIndex: 2 },
+                    { id: 12, text: "El 'journaling' es una característica de sistemas de archivos modernos como NTFS y ext4 que...", options: ["Registra la fecha y hora de cada archivo", "Aumenta drásticamente la velocidad de lectura", "Mantiene un registro ('journal') de los cambios antes de realizarlos, para prevenir la corrupción", "Crea un diario con las actividades del usuario"], correctIndex: 2 },
+                    { id: 13, text: "En un sistema de archivos, los 'metadatos' de un archivo se refieren a...", options: ["El contenido del archivo en sí (el texto, la imagen)", "La información SOBRE el archivo (nombre, tamaño, fecha, permisos)", "Una copia de seguridad del archivo", "El programa necesario para abrirlo"], correctIndex: 1 },
+                    { id: 14, text: "La 'Tabla Maestra de Archivos' (Master File Table - MFT) es el corazón del sistema de archivos...", options: ["FAT16", "ISO 9660", "NTFS", "ext2"], correctIndex: 2 },
+                    { id: 15, text: "La idea de un 'inodo' (inode) en sistemas de archivos tipo Unix (como ext4) es una estructura que almacena...", options: ["El nombre del archivo exclusivamente", "El contenido completo del archivo", "Los metadatos del archivo y los punteros a sus bloques de datos", "Las instrucciones para borrar el archivo"], correctIndex: 2 },
+                    { id: 16, text: "El 'directorio raíz' (root directory) de un sistema de archivos es...", options: ["La carpeta con los archivos más importantes", "El primer nivel, la carpeta que contiene todo lo demás", "La papelera de reciclaje", "Una copia de seguridad del sistema"], correctIndex: 1 },
+                    { id: 17, text: "Una ventaja de NTFS sobre FAT32 son las características de seguridad, como...", options: ["La protección con contraseña para todo el disco", "La capacidad de establecer permisos de lectura/escritura por archivo y usuario", "El cifrado automático de todos los datos", "La autodestrucción en caso de robo"], correctIndex: 1 },
+                    { id: 18, text: "El tamaño del 'clúster' o 'unidad de asignación' afecta la eficiencia del almacenamiento. Un clúster grande...", options: ["Es siempre mejor para todos los archivos", "Es más eficiente para archivos grandes, pero desperdicia espacio con archivos pequeños", "Es más eficiente para archivos pequeños", "No tiene ningún efecto en el espacio usado"], correctIndex: 1 },
+                    { id: 19, text: "El sistema de archivos HFS+ (Mac OS Extended) fue reemplazado por APFS principalmente porque APFS está...", options: ["Optimizado para Dispositivos de Estado Sólido (SSD)", "Es más simple y con menos funciones", "Es compatible con Windows de forma nativa", "Fue diseñado para discos duros giratorios"], correctIndex: 0 },
+                    { id: 20, text: "¿Por qué la desfragmentación no es necesaria (e incluso es perjudicial) en un SSD?", options: ["Porque los SSD no pueden fragmentar archivos", "Porque el tiempo de acceso a cualquier bloque de un SSD es casi instantáneo, sin importar su ubicación", "Porque los SSD tienen un desfragmentador de hardware incorporado", "Porque el sistema de archivos de un SSD es diferente"], correctIndex: 1 },
+                    { id: 21, text: "La función 'Copy-on-Write' (CoW) de sistemas como APFS o ZFS significa que al modificar un archivo...", options: ["Se copia primero a un disco externo", "Se escribe directamente sobre los datos antiguos", "Los datos nuevos se escriben en un bloque nuevo, y los metadatos se actualizan para apuntar a él", "Se necesita permiso explícito para copiarlo"], correctIndex: 2 },
+                    { id: 22, text: "Un 'enlace simbólico' (symlink) en Linux/macOS es un tipo especial de archivo que...", options: ["Contiene una copia exacta de otro archivo", "Es un acceso directo que apunta al nombre de otro archivo o directorio", "Es un archivo cifrado", "Es un archivo que no se puede borrar"], correctIndex: 1 },
+                    { id: 23, text: "ZFS y Btrfs son sistemas de archivos avanzados que integran la funcionalidad de...", options: ["Un navegador web", "Gestor de volúmenes y RAID en el propio sistema de archivos", "Editor de video", "Compilador de C++"], correctIndex: 1 },
+                    { id: 24, text: "En NTFS, pequeños archivos pueden ser almacenados directamente dentro de la MFT en lugar de en un clúster aparte. Esto se llama...", options: ["Archivos residentes", "Archivos fantasma", "Archivos embebidos", "Archivos mini"], correctIndex: 0 },
+                    { id: 25, text: "Una 'partición' de disco es...", options: ["Un daño físico en el disco", "Una sección lógicamente independiente del disco que puede tener su propio sistema de archivos", "Una copia de seguridad de todo el disco", "El número de serie del disco"], correctIndex: 1 },
+                    { id: 26, text: "El 'Master Boot Record' (MBR) es el primer sector de un disco duro particionado que contiene...", options: ["El primer archivo del usuario", "La tabla de particiones y el código de arranque inicial", "Información sobre el fabricante", "Un mapa de los sectores defectuosos"], correctIndex: 1 },
+                    { id: 27, text: "El sucesor moderno de MBR, que elimina muchas de sus limitaciones (como el límite de 2 TB), es...", options: ["BIOS", "CMOS", "GPT (GUID Partition Table)", "NTFS"], correctIndex: 2 },
+                    { id: 28, text: "Las 'instantáneas' (snapshots) en sistemas como APFS o Btrfs permiten...", options: ["Hacer una foto de la pantalla", "Capturar el estado de todo el sistema de archivos en un punto en el tiempo, para restaurarlo después", "Analizar el rendimiento del disco", "Bloquear el disco para que nadie pueda escribir"], correctIndex: 1 },
+                    { id: 29, text: "En la jerarquía de un sistema de archivos, el carácter '..' (doble punto) usualmente representa...", options: ["El directorio raíz", "El directorio actual", "El directorio padre (el que está un nivel por encima)", "Un error de sintaxis"], correctIndex: 2 },
+                    { id: 30, text: "El 'diferencing' en virtualización (VHD/VHDX) usa un disco 'padre' de solo lectura y un disco 'hijo' que solo almacena...", options: ["Una copia completa del padre", "Los cambios o escrituras realizados sobre el padre", "Los metadatos del sistema de archivos", "Los archivos de registro"], correctIndex: 1 }
+                ]},
+                { id: "cat08", title: "LA NUBE Y EL FUTURO", questions: [
+                    { id: 1, text: "¿Qué es el 'almacenamiento en la nube' (Cloud Storage)?", options: ["Guardar archivos en un disco duro volador", "Un servicio que almacena tus datos en servidores remotos a los que accedes por internet", "Un tipo de SSD transparente", "Un método para predecir el clima"], correctIndex: 1 },
+                    { id: 2, text: "¿Cuál es la principal ventaja del almacenamiento en la nube para un usuario?", options: ["Es siempre más rápido que un disco local", "No requiere conexión a internet", "Acceso a tus archivos desde cualquier dispositivo y lugar con conexión", "Es completamente gratuito sin límites"], correctIndex: 2 },
+                    { id: 3, text: "Servicios como Google Drive, Dropbox o OneDrive son ejemplos de...", options: ["Sistemas de archivos locales", "Almacenamiento en la nube", "Redes sociales de video", "Hardware de computadora"], correctIndex: 1 },
+                    { id: 4, text: "La frase 'la nube es solo la computadora de otra persona' significa que...", options: ["La nube es una ilusión y no existe", "Tus datos no están flotando en el aire, sino en discos duros físicos en un centro de datos", "Cualquier persona puede acceder a tus archivos", "La computación en la nube es muy sencilla"], correctIndex: 1 },
+                    { id: 5, text: "Un 'NAS' (Network Attached Storage) es un dispositivo que...", options: ["Proporciona almacenamiento directamente conectado a una sola computadora vía USB", "Proporciona almacenamiento a múltiples dispositivos a través de tu red local (Wi-Fi/Ethernet)", "Aumenta la velocidad de tu internet", "Es un tipo de router avanzado"], correctIndex: 1 },
+                    { id: 6, text: "Un 'RAID' es una tecnología que...", options: ["Limpia tu disco de virus", "Combina múltiples discos físicos en una o más unidades lógicas para redundancia o rendimiento", "Es un tipo de sistema de archivos", "Una marca de discos duros"], correctIndex: 1 },
+                    { id: 7, text: "La configuración RAID 1, conocida como 'espejo' (mirroring), funciona...", options: ["Dividiendo los datos entre dos discos para mayor velocidad", "Escribiendo una copia idéntica de los datos en dos discos simultáneamente", "Comprimiendo los datos para ahorrar espacio", "Usando un solo disco muy grande"], correctIndex: 1 },
+                    { id: 8, text: "¿Cuál es el principal beneficio de un RAID 1 (espejo)?", options: ["Duplica la capacidad de almacenamiento", "Duplica la velocidad de escritura", "Proporciona redundancia; si un disco falla, los datos están a salvo en el otro", "Es la configuración más barata"], correctIndex: 2 },
+                    { id: 9, text: "El concepto de 'Sincronización' en la nube significa que...", options: ["Los archivos se guardan solo una vez", "Los cambios hechos en un archivo en un dispositivo se replican automáticamente en la nube y otros dispositivos conectados", "Los archivos se ordenan por fecha", "La velocidad de carga y descarga es la misma"], correctIndex: 1 },
+                    { id: 10, text: "¿Qué es una 'copia de seguridad' o 'backup'?", options: ["Un archivo que usas a diario", "Una copia de tus datos guardada en un lugar seguro para poder restaurarla en caso de pérdida", "El archivo original", "Un tipo de archivo comprimido"], correctIndex: 1 },
+                    { id: 11, text: "El almacenamiento de 'objetos' (Object Storage), usado por servicios como Amazon S3, se diferencia del almacenamiento de 'bloques' porque...", options: ["Es mucho más rápido para bases de datos", "Guarda los datos como objetos completos (archivo + metadatos) con un ID único, ideal para datos no estructurados", "No utiliza discos duros, solo RAM", "Es un sistema de archivos jerárquico tradicional"], correctIndex: 1 },
+                    { id: 12, text: "En un RAID 0, conocido como 'división' (striping), los datos se...", options: ["Copian en espejo a través de varios discos", "Dividen y escriben a través de varios discos a la vez, aumentando el rendimiento", "Almacenan con un bit de paridad", "Archivan en una cinta secuencial"], correctIndex: 1 },
+                    { id: 13, text: "¿Cuál es el principal riesgo de un RAID 0?", options: ["Es muy lento", "Requiere muchos discos", "No tiene redundancia; si un solo disco falla, se pierden TODOS los datos del conjunto", "Su capacidad es muy limitada"], correctIndex: 2 },
+                    { id: 14, text: "RAID 5 mejora a RAID 0 añadiendo...", options: ["Un segundo cabezal de lectura", "Un disco de respaldo en caliente (hot spare)", "Información de paridad distribuida que permite que un disco falle sin perder datos", "Un cifrado de hardware"], correctIndex: 2 },
+                    { id: 15, text: "La 'latencia' en el contexto de la nube se refiere a...", options: ["La capacidad total de almacenamiento", "El tiempo de retraso entre que pides un dato y empiezas a recibirlo", "El ancho de banda de la conexión", "El número de usuarios conectados"], correctIndex: 1 },
+                    { id: 16, text: "IaaS, PaaS y SaaS son modelos de servicio en la nube. ¿Cuál se corresponde más con un servicio de almacenamiento como Dropbox?", options: ["IaaS (Infraestructura como Servicio)", "PaaS (Plataforma como Servicio)", "SaaS (Software como Servicio)", "Ninguno de los anteriores"], correctIndex: 2 },
+                    { id: 17, text: "Un 'SAN' (Storage Area Network) es una red de alta velocidad dedicada a...", options: ["Conectar usuarios a internet", "Conectar servidores a un conjunto compartido de dispositivos de almacenamiento de bloques", "Transmitir video en streaming", "La comunicación entre satélites"], correctIndex: 1 },
+                    { id: 18, text: "La 'nube híbrida' es un entorno que combina...", options: ["Almacenamiento en la nube y en discos ópticos", "Servidores Windows y Linux", "Infraestructura de nube pública y nube privada local", "Discos SSD y HDD"], correctIndex: 2 },
+                    { id: 19, text: "El concepto de 'soberanía de datos' se refiere a que...", options: ["Los datos son propiedad del proveedor de la nube", "Los datos almacenados están sujetos a las leyes del país donde residen físicamente los servidores", "Los datos en la nube no tienen dueño", "Se puede acceder a los datos desde cualquier país"], correctIndex: 1 },
+                    { id: 20, text: "¿Qué es el 'almacenamiento en frío' (cold storage) en la nube?", options: ["Almacenamiento en servidores ubicados en la Antártida", "Un tipo de almacenamiento de muy bajo costo para datos a los que se accede raramente, con un tiempo de recuperación lento", "Almacenamiento que no requiere electricidad", "Una copia de seguridad que nunca se puede restaurar"], correctIndex: 1 },
+                    { id: 21, text: "Una de las tecnologías más prometedoras para el almacenamiento de ultra alta densidad a largo plazo es...", options: ["Discos de vinilo mejorados", "Almacenamiento en ADN sintético", "Tarjetas perforadas de diamante", "Cristales de sal"], correctIndex: 1 },
+                    { id: 22, text: "¿Por qué el almacenamiento en ADN es teóricamente tan denso?", options: ["Porque el ADN es muy pesado", "Porque puede almacenar información en una estructura molecular tridimensional, no en una superficie bidimensional", "Porque utiliza energía nuclear", "Porque el ADN es magnético"], correctIndex: 1 },
+                    { id: 23, text: "El 'almacenamiento definido por software' (Software-Defined Storage - SDS) es una arquitectura que...", options: ["Requiere software especial para cada tipo de archivo", "Separa el software de gestión del almacenamiento del hardware físico subyacente", "Usa solo discos de estado sólido", "Solo funciona en un sistema operativo"], correctIndex: 1 },
+                    { id: 24, text: "La 'deduplicación' es una técnica que ahorra espacio al...", options: ["Comprimir todos los archivos por igual", "Identificar y almacenar una sola copia de datos idénticos (bloques o archivos) y reemplazar las otras con punteros", "Borrar los archivos duplicados que encuentra", "Dividir los archivos en partes más pequeñas"], correctIndex: 1 },
+                    { id: 25, text: "RAID 6 es similar a RAID 5, pero ofrece aún más redundancia al...", options: ["Usar dos discos de respaldo en caliente", "Escribir todos los datos tres veces", "Utilizar doble paridad distribuida, permitiendo que hasta dos discos fallen simultáneamente", "Ser el doble de rápido"], correctIndex: 2 },
+                    { id: 26, text: "El 'Teorema CAP' en sistemas distribuidos (como la nube) establece que es imposible garantizar simultáneamente más de dos de estas tres propiedades:", options: ["Velocidad, Capacidad, Costo", "Consistencia, Disponibilidad, Tolerancia a particiones", "Seguridad, Redundancia, Accesibilidad", "Lectura, Escritura, Borrado"], correctIndex: 1 },
+                    { id: 27, text: "La 'computación sin servidor' (Serverless), en el contexto del almacenamiento, a menudo se basa en...", options: ["No usar servidores en absoluto", "Un modelo impulsado por eventos donde el código se ejecuta en respuesta a acciones, como subir un archivo a un bucket de object storage", "Almacenar todo en la computadora del cliente", "Usar servidores que no necesitan sistema operativo"], correctIndex: 1 },
+                    { id: 28, text: "Los 'cristales de memoria de Superman' (almacenamiento de datos ópticos 5D) utilizan vidrio de cuarzo nanoestructurado para...", options: ["Almacenar datos con una durabilidad teórica de miles de millones de años", "Crear discos que levitan", "Reflejar la luz de manera más eficiente", "Funcionar como una CPU"], correctIndex: 0 },
+                    { id: 29, text: "Un 'lago de datos' (Data Lake) es un repositorio de almacenamiento que...", options: ["Solo almacena datos de sistemas acuáticos", "Almacena una vasta cantidad de datos en su formato nativo, sin una estructura predefinida", "Requiere que todos los datos estén en formato de tabla (SQL)", "Solo acepta archivos pequeños"], correctIndex: 1 },
+                    { id: 30, text: "La 'niebla computacional' (Fog Computing) es un paradigma que busca...", options: ["Ocultar los datos de los usuarios", "Procesar datos más cerca de donde se generan (en el borde de la red) en lugar de enviarlos todos a la nube central", "Usar el vapor de agua para almacenar bits", "Hacer que la nube sea más lenta y segura"], correctIndex: 1 }
+                ]}
+            ];
+
+            let state = {
+                playerName: "",
+                isShiftActive: false,
+                playerProfile: null
+            };
+
+            const PersistenceManager = {
+                saveState: () => {
+                    try { localStorage.setItem(SAVE_KEY, JSON.stringify(state.playerProfile)); } catch (e) { console.error("Error de persistencia al guardar:", e); }
+                },
+                loadState: () => {
+                    try {
+                        const savedData = localStorage.getItem(SAVE_KEY);
+                        if (savedData) {
+                            state.playerProfile = JSON.parse(savedData);
+                            state.playerName = state.playerProfile.name;
+                            return true;
+                        }
+                        return false;
+                    } catch (e) { localStorage.removeItem(SAVE_KEY); return false; }
+                }
+            };
+            
+            function transitionTo(screenLoader) {
+                const currentScreen = appContainer.querySelector('.screen');
+                if (currentScreen) {
+                    currentScreen.classList.remove('visible');
+                    setTimeout(() => { currentScreen.remove(); if (screenLoader) screenLoader(); }, 500);
+                } else if (screenLoader) {
+                    screenLoader();
+                }
+            }
+
+            function loadTitleScreen() {
+                const screen = document.createElement('div');
+                screen.id = 'title-screen';
+                screen.className = 'screen';
+                screen.innerHTML = `
+                    <h1>PROYECTO: BÓVEDA DIGITAL</h1>
+                    <p>Un sistema de validación de conocimiento</p>
+                    <div class="button-group">
+                        <button class="start-button">INICIAR PROTOCOLO</button>
+                        <button class="reset-button">PURGAR PERFIL DE OPERARIO</button>
+                    </div>`;
+                appContainer.appendChild(screen);
+
+                screen.querySelector('.start-button').addEventListener('click', () => {
+                    if (PersistenceManager.loadState()) {
+                        transitionTo(loadCategoryHub);
+                    } else {
+                        transitionTo(loadPlayerNameScreen);
+                    }
+                });
+                
+                screen.querySelector('.reset-button').addEventListener('click', () => {
+                    if (confirm("ADVERTENCIA:\n\nEsta acción borrará permanentemente el perfil del operario y todo su progreso.\n\n¿Desea continuar?")) {
+                        localStorage.removeItem(SAVE_KEY);
+                        window.location.reload();
+                    }
+                });
+                setTimeout(() => screen.classList.add('visible'), 50);
+            }
+
+            function loadPlayerNameScreen() {
+                const screen = document.createElement('div');
+                screen.id = 'player-name-screen';
+                screen.className = 'screen';
+                screen.innerHTML = `<div id="name-display-container"><span id="name-display"></span><span class="cursor"></span></div><div id="virtual-keyboard"></div>`;
+                appContainer.appendChild(screen);
+                buildKeyboard();
+                setTimeout(() => screen.classList.add('visible'), 50);
+            }
+
+            function buildKeyboard() {
+                const keyboardContainer = document.getElementById('virtual-keyboard');
+                const layout = [['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L','ENTER'],['SHIFT','Z','X','C','V','B','N','M','BORRAR'],['ESPACIO']];
+                layout.forEach(row => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'keyboard-row';
+                    row.forEach(key => {
+                        const btn = document.createElement('button');
+                        btn.className = 'key'; btn.dataset.key = key;
+                        if(key.length > 1){ btn.classList.add('key-special'); btn.textContent = key; if(key === 'ESPACIO') btn.classList.add('key-wide'); if(key === 'SHIFT') btn.classList.add('key-shift'); }
+                        else { btn.innerHTML = `<span class="case-down">${key.toLowerCase()}</span><span class="case-up">${key.toUpperCase()}</span>`; }
+                        rowDiv.appendChild(btn);
+                    });
+                    keyboardContainer.appendChild(rowDiv);
+                });
+                keyboardContainer.addEventListener('click', handleKeyPress);
+            }
+
+            function handleKeyPress(event) {
+                const keyElement = event.target.closest('.key');
+                if (!keyElement) return;
+                const key = keyElement.dataset.key;
+                const MAX_NAME_LENGTH = 16;
+                switch (key) {
+                    case 'SHIFT':
+                        state.isShiftActive = !state.isShiftActive;
+                        document.getElementById('virtual-keyboard').classList.toggle('shift-active', state.isShiftActive);
+                        keyElement.classList.toggle('active', state.isShiftActive);
+                        break;
+                    case 'BORRAR': state.playerName = state.playerName.slice(0, -1); break;
+                    case 'ENTER':
+                        if (state.playerName.trim().length > 0) {
+                            state.playerProfile = { name: state.playerName, progress: {} };
+                            gameData.forEach(cat => { state.playerProfile.progress[cat.id] = []; });
+                            PersistenceManager.saveState();
+                            transitionTo(loadCategoryHub);
+                        }
+                        break;
+                    case 'ESPACIO': if (state.playerName.length < MAX_NAME_LENGTH) state.playerName += ' '; break;
+                    default: if (state.playerName.length < MAX_NAME_LENGTH) state.playerName += state.isShiftActive ? key.toUpperCase() : key.toLowerCase(); break;
+                }
+                document.getElementById('name-display').textContent = state.playerName;
+            }
+
+            function loadCategoryHub() {
+                const screen = document.createElement('div');
+                screen.id = 'category-hub-screen';
+                screen.className = 'screen';
+                let gridHTML = '';
+                gameData.forEach(category => {
+                    const progress = state.playerProfile.progress[category.id] || [];
+                    const completedCount = progress.length;
+                    const progressPercentage = (completedCount / TOTAL_QUESTIONS_PER_CAT) * 100;
+                    gridHTML += `<div class="category-card" data-category-id="${category.id}"><h3>${category.title}</h3><div class="progress-container"><div class="progress-bar" style="width: ${progressPercentage}%;"></div></div><span class="progress-text">${completedCount} / ${TOTAL_QUESTIONS_PER_CAT}</span></div>`;
+                });
+                screen.innerHTML = `<h2>Bienvenido, ${state.playerName}. Seleccione un módulo:</h2><div id="category-grid">${gridHTML}</div>`;
+                appContainer.appendChild(screen);
+                screen.querySelector('#category-grid').addEventListener('click', (event) => {
+                    const card = event.target.closest('.category-card');
+                    if (card) transitionTo(() => loadChallengeMatrix(card.dataset.categoryId));
+                });
+                setTimeout(() => screen.classList.add('visible'), 50);
+            }
+
+            function loadChallengeMatrix(categoryId) {
+                const screen = document.createElement('div');
+                screen.id = 'challenge-matrix-screen';
+                screen.className = 'screen';
+                const category = gameData.find(cat => cat.id === categoryId);
+                const progress = state.playerProfile.progress[categoryId] || [];
+                let gridHTML = '';
+                for (let i = 1; i <= TOTAL_QUESTIONS_PER_CAT; i++) {
+                    const questionProgress = progress.find(p => p.qId === i);
+                    let statusClass = '';
+                    if (questionProgress) statusClass = questionProgress.correct ? 'status-correct' : 'status-incorrect';
+                    gridHTML += `<button class="challenge-node ${statusClass}" data-question-id="${i}">${i}</button>`;
+                }
+                screen.innerHTML = `<h2>${category.title}</h2><div id="challenge-grid">${gridHTML}</div><button class="back-button">&lt; VOLVER AL HUB</button>`;
+                appContainer.appendChild(screen);
+                screen.querySelector('.back-button').addEventListener('click', () => transitionTo(loadCategoryHub));
+                screen.querySelector('#challenge-grid').addEventListener('click', (event) => {
+                    const node = event.target.closest('.challenge-node');
+                    const questionsAvailable = category.questions && category.questions.length > 0;
+                    if (node && !node.classList.contains('status-correct') && questionsAvailable) {
+                        const questionId = parseInt(node.dataset.questionId, 10);
+                        if(category.questions.find(q => q.id === questionId)) {
+                             transitionTo(() => loadGameInterface(categoryId, questionId));
+                        }
+                    }
+                });
+                setTimeout(() => screen.classList.add('visible'), 50);
+            }
+            
+            function loadGameInterface(categoryId, questionId) {
+                const screen = document.createElement('div');
+                screen.id = 'game-interface-screen';
+                screen.className = 'screen';
+                const category = gameData.find(cat => cat.id === categoryId);
+                const question = category.questions.find(q => q.id === questionId);
+                let optionsHTML = '';
+                question.options.forEach((optionText, index) => {
+                    optionsHTML += `<button class="option-button" data-option-index="${index}">${optionText}</button>`;
+                });
+                screen.innerHTML = `<div id="question-container"><p id="question-text">${question.text}</p></div><div id="options-container">${optionsHTML}</div>`;
+                appContainer.appendChild(screen);
+                screen.querySelector('#options-container').addEventListener('click', (event) => {
+                    const selectedButton = event.target.closest('.option-button');
+                    if (selectedButton && !selectedButton.classList.contains('locked')) {
+                        handleAnswer(categoryId, question.id, parseInt(selectedButton.dataset.optionIndex), question.correctIndex);
+                    }
+                });
+                setTimeout(() => screen.classList.add('visible'), 50);
+            }
+
+            function handleAnswer(categoryId, questionId, chosenIndex, correctIndex) {
+                const buttons = document.querySelectorAll('.option-button');
+                buttons.forEach(btn => btn.classList.add('locked'));
+                const isCorrect = chosenIndex === correctIndex;
+                const progressArray = state.playerProfile.progress[categoryId];
+                const existingEntryIndex = progressArray.findIndex(p => p.qId === questionId);
+                if (existingEntryIndex !== -1) { if(isCorrect) progressArray[existingEntryIndex].correct = true; } 
+                else { progressArray.push({ qId: questionId, correct: isCorrect }); }
+                PersistenceManager.saveState();
+                const selectedBtn = document.querySelector(`[data-option-index="${chosenIndex}"]`);
+                const correctBtn = document.querySelector(`[data-option-index="${correctIndex}"]`);
+                selectedBtn.classList.add('selected');
+                if (isCorrect) { selectedBtn.classList.add('correct'); }
+                else { selectedBtn.classList.add('incorrect'); correctBtn.classList.add('correct'); }
+                const VERDICT_DELAY = 1500;
+                setTimeout(() => {
+                    transitionTo(() => loadVerdictScreen(isCorrect, categoryId));
+                }, VERDICT_DELAY);
+            }
+
+            function loadVerdictScreen(isCorrect, categoryId) {
+                const screen = document.createElement('div');
+                screen.id = 'verdict-screen';
+                screen.className = 'screen';
+                const message = isCorrect ? ">> RESPUESTA CORRECTA <<" : ">> ANOMALÍA REGISTRADA <<";
+                const messageClass = isCorrect ? "verdict-correct" : "verdict-incorrect";
+                screen.innerHTML = `<p id="verdict-message" class="${messageClass}">${message}</p>`;
+                appContainer.appendChild(screen);
+                setTimeout(() => screen.classList.add('visible'), 50);
+                const RETURN_DELAY = 2000;
+                setTimeout(() => {
+                    transitionTo(() => loadChallengeMatrix(categoryId));
+                }, RETURN_DELAY);
+            }
+
+            function startApplication() {
+                transitionTo(loadTitleScreen);
+            }
+
+            startApplication();
+        });
+    </script>
+</body>
+</html>
