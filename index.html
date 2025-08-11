@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AXIOM INTERFACE :: BETA 1.3 (DENSIDAD Y DETONACIÓN)</title>
+    <title>AXIOM INTERFACE :: BETA 1.6 (ESTADO SIMBÓLICO)</title>
     <style>
         /*
-         * PROTOCOLO CERO v5.0 :: DIRECTIVA DE ESTILO (DENSIDAD Y DETONACIÓN / BETA 1.3)
+         * PROTOCOLO CERO v5.3 :: DIRECTIVA DE ESTILO (ESTADO SIMBÓLICO / BETA 1.6)
          * IDENTIDAD: AXIOM
          * ESTADO: ACTIVO
         */
@@ -27,7 +27,7 @@
         .dust-particle { position: absolute; background-color: var(--color-text-passive); border-radius: 50%; opacity: 0; animation: drift linear infinite; }
         @keyframes drift { from { transform: translateY(0px) translateX(0px); opacity: 0; } 50% { opacity: 0.2; } to { transform: translateY(100vh) translateX(-20vw); opacity: 0; } }
 
-        #app-container { width: 95vw; height: 95vh; max-width: 1200px; max-height: 800px; border: 2px solid var(--color-text-passive); padding: 2vw; position: relative; display: flex; justify-content: center; align-items: center; background-color: rgba(8, 8, 10, 0.9); backdrop-filter: blur(5px); }
+        #app-container { width: 95vw; height: 95vh; max-width: 1200px; max-height: 800px; border: 2px solid var(--color-text-passive); padding: 2vw; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: rgba(8, 8, 10, 0.9); backdrop-filter: blur(5px); }
         @media (min-width: 768px) { #app-container { aspect-ratio: 16 / 9; height: auto; padding: 1.5rem; } }
         html:fullscreen #app-container, html:-webkit-full-screen #app-container { width: 100vw; height: 100vh; max-width: none; max-height: none; border: none; }
 
@@ -41,6 +41,7 @@
         .primary-button:hover, .primary-button:focus-visible { background-color: rgba(0, 255, 255, 0.1); color: var(--color-accent-primary); box-shadow: 0 0 15px var(--color-accent-primary); outline: none; }
         .secondary-button:hover, .secondary-button:focus-visible { background-color: var(--color-text-passive); color: var(--color-background-primary); text-shadow: none; outline: none; }
         #hub-header .secondary-button { width: auto; padding: 0.4rem 0.8rem; font-size: clamp(0.8rem, 1vw, 1rem); white-space: nowrap; }
+        .disconnect-button:hover { background-color: rgba(255, 26, 75, 0.1); border-color: var(--color-accent-error); color: var(--color-accent-error); text-shadow: 0 0 8px var(--color-accent-error); }
         .cascade-item { animation: cascade-in 0.5s both; }
         @keyframes cascade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -105,23 +106,27 @@
         .mastery-triad { position: absolute; top: 0.5vmin; right: 1vmin; font-size: clamp(1rem, 2vw, 1.2rem); letter-spacing: 0.2em; opacity: 0.2; color: var(--color-text-passive); transition: all 0.5s; }
         .mastery-triad.mastered { opacity: 1; color: var(--color-accent-primary); text-shadow: 0 0 8px var(--color-accent-primary); }
 
-        /* Mejora 1: La Matriz Comprimida */
-        #challenge-matrix-screen { justify-content: flex-start; padding: 2vh 0; gap: 1vh; width:100%; } 
-        #challenge-matrix-screen h2 { font-size: clamp(1.5rem, 3vw, 2rem); text-align: center; padding: 0 1rem; margin-bottom: 2vh; text-shadow: 0 0 8px var(--color-accent-primary);} 
-        #challenge-grid { position: relative; width: 95%; max-width: 1100px; margin: 0 auto; display: grid; gap: 1.2vmin; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); flex-grow: 1; overflow-y: auto; padding: 1vmin; } 
-        #challenge-grid::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: repeating-linear-gradient(var(--color-text-passive) 0 1px, transparent 1px 100%), repeating-linear-gradient(90deg, var(--color-text-passive) 0 1px, transparent 1px 100%); background-size: 35px 35px; opacity: 0.1; z-index: -1; }
-        .matrix-node { border: 2px solid var(--color-text-passive); background-color: var(--color-background-primary); cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; min-height: 120px; position: relative; }
-        .matrix-node:hover:not(.status-correct) { border-color: var(--color-accent-primary); transform: scale(1.05); z-index: 2; box-shadow: 0 0 15px var(--color-accent-primary); }
-        .node-header { font-size: clamp(0.6rem, 1vw, 0.7rem); padding: 0.4em; text-align: left; opacity: 0.6; }
-        .node-core { flex-grow: 1; display: flex; justify-content: center; align-items: center; position: relative; font-size: clamp(2rem, 5vw, 2.8rem); }
-        .node-glyph { color: var(--color-text-passive); opacity: 0.3; }
-        .node-identifier { position: absolute; font-size: 0.5em; color: var(--color-text-passive); opacity: 0.9; text-shadow: 0 0 5px var(--color-background-primary); }
-        .node-status { font-size: clamp(0.7rem, 1.1vw, 0.8rem); padding: 0.5em; text-align: center; background-color: rgba(176, 180, 192, 0.1); transition: all 0.2s; }
-        .matrix-node.status-correct .node-status { background-color: var(--color-accent-primary); color: var(--color-background-primary); text-shadow: none; }
-        .matrix-node.status-incorrect .node-status { background-color: var(--color-accent-error); color: var(--color-background-primary); text-shadow: none; }
-        .matrix-node.status-correct { border-color: var(--color-accent-primary); cursor: default; }
-        .matrix-node.status-incorrect { border-color: var(--color-accent-error); }
+        /* REFACTOR: Matriz de Estado Simbólico */
+        #challenge-matrix-screen { justify-content: flex-start; padding: 2vh 1vw; gap: 1vh; width:100%; } 
+        #challenge-matrix-screen h2 { font-size: clamp(1.2rem, 2.5vw, 1.5rem); text-align: center; padding: 0 1rem; margin-bottom: 2vh; text-shadow: 0 0 8px var(--color-accent-primary); flex-shrink: 0;} 
+        #challenge-grid { position: relative; width: 100%; margin: 0 auto; display: grid; gap: 1vmin; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(5, 1fr); flex-grow: 1; padding: 1vmin; min-height: 0; } 
+        @media (min-aspect-ratio: 4/3) { #challenge-grid { grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(3, 1fr); } }
         
+        .matrix-node { border: 2px solid var(--color-text-passive); background-color: rgba(8, 8, 10, 0.5); cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; overflow: hidden; }
+        .matrix-node:hover:not(.status-correct):not(.status-incorrect) { border-color: var(--color-accent-primary); transform: scale(1.05); z-index: 2; box-shadow: 0 0 15px var(--color-accent-primary); }
+        
+        .node-core { font-size: clamp(2rem, 9vmin, 4rem); position: relative; display:flex; justify-content:center; align-items:center; transition: opacity 0.3s; }
+        .node-glyph { color: var(--color-text-passive); opacity: 0.3; transition: text-shadow 0.3s; }
+        .node-identifier { font-size: 0.5em; color: var(--color-text-passive); opacity: 0.9; text-shadow: 0 0 5px var(--color-background-primary); }
+
+        .matrix-node.status-correct { border-color: var(--color-accent-primary); cursor: default; }
+        .matrix-node.status-correct .node-glyph { opacity: 1; text-shadow: 0 0 10px var(--color-accent-primary); }
+        
+        .matrix-node.status-incorrect { border-color: var(--color-accent-error); }
+        .matrix-node.status-incorrect .node-core { opacity: 0.4; }
+        .matrix-node.status-incorrect:hover { transform: scale(1.05); z-index: 2; box-shadow: 0 0 15px var(--color-accent-error); }
+        .matrix-node.status-incorrect:hover .node-core { opacity: 1; }
+
         #game-interface-screen { display: flex; flex-direction: row; gap: 2vw; padding: 2vw; align-items: stretch; }
         .context-panel { flex: 2; display: flex; flex-direction: column; justify-content: center; padding-right: 2vw; border-right: 2px solid var(--color-text-passive); }
         .interaction-panel { flex: 3; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2vmin; }
@@ -138,7 +143,6 @@
 
         .back-button { padding: 0.5rem 1.5rem; font-size: clamp(1rem, 1.2vw, 1.4rem); color: var(--color-text-passive); background-color: transparent; border: 2px solid var(--color-text-passive); cursor: pointer; transition: all 0.3s; flex-shrink: 0; margin: 2vh 0; } .back-button:hover { background-color: var(--color-text-passive); color: var(--color-background-primary); } 
         
-        /* Mejora 2: Detonación de Veredicto */
         #verdict-screen { z-index: 20; text-align: center; gap: 3rem; position: relative; } 
         .verdict-bg-glyph { position: absolute; font-size: 50vmin; color: var(--color-accent-primary); opacity: 0; z-index: -1; animation: bg-glyph-pulse 2s ease-in-out forwards; }
         @keyframes bg-glyph-pulse { 0% { opacity: 0; transform: scale(0.8); } 50% { opacity: 0.05; } 100% { opacity: 0.03; transform: scale(1); } }
@@ -168,7 +172,7 @@
     <div id="app-container"></div>
 
     <script>
-    // System Directive: BETA 1.3 (DENSIDAD Y DETONACIÓN)
+    // System Directive: BETA 1.6 (ESTADO SIMBÓLICO)
     // Protocol: AXIOM Engaged.
 
     (() => {
@@ -191,8 +195,15 @@
                 { id: "cat10", title: "SEGURIDAD Y CIFRADO", glyph: "🔑", questions: [ { id: 1, text: "¿Qué es el cifrado?", options: ["Un método para borrar datos", "El proceso de convertir datos para que sean ilegibles sin una clave", "Un tipo de compresión", "Una firma digital"], correctAnswer: "El proceso de convertir datos para que sean ilegibles sin una clave" }, { id: 2, text: "En criptografía simétrica, se usa la misma clave para...", options: ["Cifrar y firmar", "Solo para cifrar", "Solo para descifrar", "Cifrar y descifrar"], correctAnswer: "Cifrar y descifrar" }, { id: 3, text: "En criptografía asimétrica, la clave pública se usa para... y la clave privada para...", options: ["Descifrar / Cifrar", "Firmar / Verificar", "Cifrar / Descifrar", "Autenticar / Cifrar"], correctAnswer: "Cifrar / Descifrar" }, { id: 4, text: "¿Cuál es una de las principales desventajas del cifrado simétrico?", options: ["Es muy lento", "El problema de la distribución segura de la clave", "Usa claves muy largas", "No es seguro"], correctAnswer: "El problema de la distribución segura de la clave" }, { id: 5, text: "Una función hash criptográfica toma una entrada y produce...", options: ["La misma entrada cifrada", "Una salida de longitud fija y única (hash)", "Una clave privada", "Un certificado digital"], correctAnswer: "Una salida de longitud fija y única (hash)" }, { id: 6, text: "El estándar de cifrado moderno y ampliamente utilizado, sucesor de DES, es...", options: ["RSA", "AES", "SHA-1", "MD5"], correctAnswer: "AES" }, { id: 7, text: "El propósito de una 'sal' (salt) al hashear contraseñas es...", options: ["Hacer el hash más corto", "Asegurar que contraseñas idénticas tengan hashes diferentes", "Añadir un ingrediente secreto", "Acelerar el proceso"], correctAnswer: "Asegurar que contraseñas idénticas tengan hashes diferentes" }, { id: 8, text: "¿Qué garantiza una firma digital?", options: ["Confidencialidad", "Disponibilidad", "Autenticidad, integridad y no repudio", "Anonimato"], correctAnswer: "Autenticidad, integridad y no repudio" }, { id: 9, text: "El protocolo de seguridad estándar para las conexiones web (HTTPS) es...", options: ["FTP", "SSH", "SSL/TLS", "SMTP"], correctAnswer: "SSL/TLS" }, { id: 10, text: "Un ataque de 'fuerza bruta' consiste en...", options: ["Engañar al usuario para que revele su clave", "Probar todas las combinaciones posibles de una clave o contraseña", "Inundar un servidor con peticiones", "Interceptar la comunicación"], correctAnswer: "Probar todas las combinaciones posibles de una clave o contraseña" }, { id: 11, text: "¿Qué es un 'ataque de día cero' (Zero-Day)?", options: ["Un ataque que dura menos de un día", "Un ataque que explota una vulnerabilidad no conocida públicamente", "Un ataque que siempre tiene éxito", "Un ataque realizado el primer día del año"], correctAnswer: "Un ataque que explota una vulnerabilidad no conocida públicamente" }, { id: 12, text: "El 'phishing' es un tipo de ataque de...", options: ["Denegación de servicio", "Ingeniería social", "Fuerza bruta", "Malware"], correctAnswer: "Ingeniería social" }, { id: 13, text: "El algoritmo RSA es un ejemplo de criptografía...", options: ["Simétrica", "Cuántica", "Asimétrica", "Hash"], correctAnswer: "Asimétrica" }, { id: 14, text: "Una VPN (Virtual Private Network) se usa principalmente para...", options: ["Acelerar la conexión a internet", "Crear una conexión cifrada y segura sobre una red pública", "Bloquear anuncios", "Detectar virus"], correctAnswer: "Crear una conexión cifrada y segura sobre una red pública" }, { id: 15, text: "¿Qué es un 'firewall' (cortafuegos)?", options: ["Un antivirus", "Un dispositivo o software que monitoriza y filtra el tráfico de red", "Un sistema de detección de intrusos", "Una base de datos de malware"], correctAnswer: "Un dispositivo o software que monitoriza y filtra el tráfico de red" }, { id: 16, text: "El 'malware' es un término que engloba a...", options: ["Solo virus", "Solo spyware", "Software diseñado para dañar o infiltrarse en un sistema", "Errores de programación"], correctAnswer: "Software diseñado para dañar o infiltrarse en un sistema" }, { id: 17, text: "La 'autenticación de dos factores' (2FA) requiere...", options: ["Dos contraseñas diferentes", "Dos formas de verificación (ej: contraseña y código del móvil)", "Dos computadoras", "Dos cuentas de usuario"], correctAnswer: "Dos formas de verificación (ej: contraseña y código del móvil)" }, { id: 18, text: "Una de las propiedades clave de una función hash es que debe ser...", options: ["Reversible", "Lenta", "Computacionalmente difícil de invertir (resistencia a preimagen)", "Simétrica"], correctAnswer: "Computacionalmente difícil de invertir (resistencia a preimagen)" }, { id: 19, text: "¿Qué hace un 'keylogger'?", options: ["Genera claves seguras", "Registra las pulsaciones del teclado sin el conocimiento del usuario", "Administra contraseñas", "Cifra el teclado"], correctAnswer: "Registra las pulsaciones del teclado sin el conocimiento del usuario" }, { id: 20, text: "La esteganografía es la técnica de...", options: ["Ocultar un mensaje dentro de otro archivo (ej: una imagen)", "Romper cifrados", "Firmar digitalmente un documento", "Crear hashes"], correctAnswer: "Ocultar un mensaje dentro de otro archivo (ej: una imagen)" }, { id: 21, text: "Una 'botnet' es una red de...", options: ["Expertos en seguridad", "Servidores de alta potencia", "Dispositivos infectados controlados remotamente por un atacante", "Robots de software benignos"], correctAnswer: "Dispositivos infectados controlados remotamente por un atacante" }, { id: 22, text: "En un ataque 'Man-in-the-Middle' (MitM), el atacante...", options: ["Borra los datos del servidor", "Se interpone secretamente entre dos partes que se comunican", "Envía correos de phishing", "Intenta adivinar la contraseña"], correctAnswer: "Se interpone secretamente entre dos partes que se comunican" }, { id: 23, text: "¿Qué es una Autoridad de Certificación (CA)?", options: ["Una agencia gubernamental de policía", "Una entidad que emite certificados digitales para verificar identidades", "Una empresa que vende antivirus", "Un estándar de cifrado"], correctAnswer: "Una entidad que emite certificados digitales para verificar identidades" }, { id: 24, text: "La seguridad del algoritmo RSA se basa en la dificultad de...", options: ["Sumar números grandes", "Multiplicar números primos", "Factorizar números grandes que son producto de dos primos", "Generar números aleatorios"], correctAnswer: "Factorizar números grandes que son producto de dos primos" }, { id: 25, text: "Un ataque de denegación de servicio (DoS) tiene como objetivo...", options: ["Robar información", "Hacer que un servicio no esté disponible para sus usuarios legítimos", "Modificar los datos", "Cifrar los archivos del sistema"], correctAnswer: "Hacer que un servicio no esté disponible para sus usuarios legítimos" }, { id: 26, text: "La diferencia entre un virus y un gusano es que el gusano...", options: ["Necesita un programa anfitrión", "No es dañino", "Puede propagarse por la red por sí mismo", "Solo afecta a correos electrónicos"], correctAnswer: "Puede propagarse por la red por sí mismo" }, { id: 27, text: "El 'Principio de Menor Privilegio' establece que un usuario o proceso debe tener...", options: ["Todos los permisos posibles", "Solo los permisos estrictamente necesarios para realizar su función", "Acceso de administrador por defecto", "Permisos que caducan cada hora"], correctAnswer: "Solo los permisos estrictamente necesarios para realizar su función" }, { id: 28, text: "¿Qué significa 'hardening' en seguridad informática?", options: ["Hacer el hardware más resistente físicamente", "El proceso de asegurar un sistema reduciendo su superficie de vulnerabilidad", "Instalar muchos antivirus", "Cifrar todo el disco duro"], correctAnswer: "El proceso de asegurar un sistema reduciendo su superficie de vulnerabilidad" }, { id: 29, text: "La criptografía de curva elíptica (ECC) es una alternativa a RSA que ofrece...", options: ["Menor seguridad con claves más largas", "Seguridad comparable con claves mucho más cortas", "Un cifrado más rápido pero inseguro", "Solo sirve para firmar, no para cifrar"], correctAnswer: "Seguridad comparable con claves mucho más cortas" }, { id: 30, text: "Un 'honeypot' es un sistema señuelo diseñado para...", options: ["Atraer y estudiar a los atacantes", "Almacenar miel digital", "Proteger contraseñas", "Acelerar la red"], correctAnswer: "Atraer y estudiar a los atacantes" } ]}
             ],
             DOM: {},
-            state: { allProfiles: [], activeProfile: null, activeNameInput: "", isShiftActive: false, questionStartTime: 0 },
+            state: { allProfiles: [], activeProfile: null, questionStartTime: 0 },
             
+            KEYBOARD_STANDARD_LAYOUT: [
+                [['Q'],['W'],['E'],['R'],['T'],['Y'],['U'],['I'],['O'],['P']], 
+                [['A'],['S'],['D'],['F'],['G'],['H'],['J'],['K'],['L'],['ENTER', 'key-special']], 
+                [['SHIFT', 'key-special', 'key-shift'],['Z'],['X'],['C'],['V'],['B'],['N'],['M'],['BORRAR', 'key-special']],
+                [['ESPACIO', 'key-special', 'key-wide']]
+            ],
+
             themes: {
                 "cyan-code": { name: "CÓDIGO CIAN", colors: { bg: '#08080A', text: '#B0B4C0', accent: '#00FFFF', error: '#FF1A4B' } },
                 "fire-volcano": { name: "VOLCÁN DE FUEGO", colors: { bg: '#100505', text: '#D6C2C2', accent: '#FF1A4B', error: '#E8FF3B' } },
@@ -203,9 +214,9 @@
             },
 
             PersistenceManager: {
-                SAVE_KEY: 'AXIOM_VAULT_SAVE_BETA1_3',
-                AUDIO_KEY: 'AXIOM_VAULT_AUDIO_MUTED_BETA1_3',
-                THEME_KEY: 'AXIOM_VAULT_THEME_BETA1_3',
+                SAVE_KEY: 'AXIOM_VAULT_SAVE_BETA1_6',
+                AUDIO_KEY: 'AXIOM_VAULT_AUDIO_MUTED_BETA1_6',
+                THEME_KEY: 'AXIOM_VAULT_THEME_BETA1_6',
                 loadState: () => { try { const data = localStorage.getItem(AXIOM.PersistenceManager.SAVE_KEY); AXIOM.state.allProfiles = data ? JSON.parse(data) : []; } catch (e) { console.error("Error loading profiles.", e); AXIOM.state.allProfiles = []; } },
                 saveState: () => { try { localStorage.setItem(AXIOM.PersistenceManager.SAVE_KEY, JSON.stringify(AXIOM.state.allProfiles)); } catch (e) { console.error("Error saving profiles.", e); } },
                 loadAudioPref: () => localStorage.getItem(AXIOM.PersistenceManager.AUDIO_KEY) === 'true',
@@ -256,40 +267,45 @@
             },
 
             ScreenManager: {
-                currentScreenElement: null,
+                currentScreen: null,
                 transitionTo(screenBuilderFn, ...args) {
                     AXIOM.SoundEngine.playSound('transition');
-                    const oldScreen = this.currentScreenElement;
-                    if (oldScreen) { oldScreen.classList.add('glitch-out'); setTimeout(() => { if (oldScreen.parentNode) oldScreen.remove(); }, 300); }
+                    const oldScreenElement = this.currentScreen ? this.currentScreen.element : null;
+                    
+                    if (oldScreenElement) {
+                        oldScreenElement.classList.add('glitch-out');
+                        setTimeout(() => {
+                            if (oldScreenElement.parentNode) oldScreenElement.remove();
+                        }, 300);
+                    }
+                    
                     setTimeout(() => {
                         const newScreen = screenBuilderFn.apply(AXIOM.UI, args);
-                        this.currentScreenElement = newScreen;
-                        AXIOM.DOM.appContainer.appendChild(newScreen);
-                        void newScreen.offsetWidth;
-                        newScreen.classList.add('visible');
-                        newScreen.querySelectorAll('.cascade-item').forEach((item, index) => { item.style.animationDelay = `${index * 50}ms`; });
-                        if (newScreen.id === 'game-interface-screen') {
-                            AXIOM.Logic.typewriterRender(
-                                newScreen.querySelector('.context-panel p'),
-                                Array.from(newScreen.querySelectorAll('.option-cell')),
-                                newScreen.dataset.question,
-                                JSON.parse(newScreen.dataset.options),
-                                newScreen.dataset.categoryId,
-                                parseInt(newScreen.dataset.questionId, 10),
-                                JSON.parse(newScreen.dataset.fullQuestion)
-                            );
+                        this.currentScreen = newScreen;
+                        
+                        AXIOM.DOM.appContainer.appendChild(newScreen.element);
+                        void newScreen.element.offsetWidth; // Force reflow
+                        newScreen.element.classList.add('visible');
+                        
+                        newScreen.element.querySelectorAll('.cascade-item').forEach((item, index) => {
+                            item.style.animationDelay = `${index * 50}ms`;
+                        });
+
+                        if (newScreen.onMount) {
+                            newScreen.onMount();
                         }
-                    }, oldScreen ? 250 : 0);
+
+                    }, oldScreenElement ? 250 : 0);
                 }
             },
             
             UI: {
                 createElement(tag, options = {}) { const el = document.createElement(tag); for (const key in options) { if (key === 'classList') el.classList.add(...options[key].filter(Boolean)); else if (key === 'dataset') Object.assign(el.dataset, options[key]); else if (key === 'style' && typeof options[key] === 'object') Object.assign(el.style, options[key]); else el[key] = options[key]; } return el; },
                 createPreloaderScreen() {
-                    const screen = this.createElement('div', { id: 'preloader-screen', classList: ['screen'] });
+                    const screenEl = this.createElement('div', { id: 'preloader-screen', classList: ['screen'] });
                     const bootSequence = [
                         'INITIATING AXIOM KERNEL...',
-                        'LOADING PROTOCOL CERO v5.0...         [OK]',
+                        'LOADING PROTOCOL CERO v5.3...         [OK]',
                         'VERIFYING DATA VAULT INTEGRITY...      [SECURE]',
                         'RENDER ENGINE ONLINE...                [ACTIVE]',
                         '',
@@ -299,28 +315,28 @@
                     bootSequence.forEach((line, index) => {
                         const p = this.createElement('p', { classList: ['boot-line'], textContent: line });
                         p.style.animationDelay = `${delay}ms`;
-                        screen.appendChild(p);
+                        screenEl.appendChild(p);
                         delay += (index < 4 ? 200 : 500);
                     });
                     setTimeout(() => {
                         AXIOM.ScreenManager.transitionTo(AXIOM.state.allProfiles.length > 0 ? this.buildProfileManagerScreen : this.createTitleScreen);
                     }, delay + 500);
-                    return screen;
+                    return { element: screenEl };
                 },
                 createTitleScreen() {
-                    const screen = this.createElement('div', { id: 'title-screen', classList: ['screen'] });
+                    const screenEl = this.createElement('div', { id: 'title-screen', classList: ['screen'] });
                     const startButton = this.createElement('button', { textContent: '[ ESTABLECER CONEXIÓN ]', classList: ['primary-button'] });
                     startButton.addEventListener('click', () => { AXIOM.Logic.requestFullscreen(); AXIOM.SoundEngine.playSound('click_primary'); AXIOM.ScreenManager.transitionTo(this.buildProfileManagerScreen); });
-                    screen.append(
+                    screenEl.append(
                         this.createElement('h1', { textContent: 'AXIOM' }),
-                        this.createElement('h2', { textContent: 'BETA 1.3 // BÓVEDA DE DATOS' }),
+                        this.createElement('h2', { textContent: 'BETA 1.6 // ESTADO SIMBÓLICO' }),
                         startButton
                     );
-                    return screen;
+                    return { element: screenEl };
                 },
                 buildProfileManagerScreen() {
-                    const screen = this.createElement('div', { id: 'profile-manager-screen', classList: ['screen'] });
-                    screen.appendChild(this.createElement('h1', { textContent: 'SELECCIÓN DE IDENTIDAD' }));
+                    const screenEl = this.createElement('div', { id: 'profile-manager-screen', classList: ['screen'] });
+                    screenEl.appendChild(this.createElement('h1', { textContent: 'SELECCIÓN DE IDENTIDAD' }));
                     const profileList = this.createElement('div', { classList: ['profile-list'] });
                     const totalQuestions = AXIOM.gameData.reduce((sum, cat) => sum + cat.questions.length, 0);
                     AXIOM.state.allProfiles.forEach(p => {
@@ -336,20 +352,22 @@
                     });
                     const newProfilePlate = this.createElement('div', { classList: ['new-profile-plate', 'cascade-item'], dataset: { action: 'new-profile' }, textContent: '[ + REGISTRAR... ]' });
                     profileList.appendChild(newProfilePlate);
-                    screen.appendChild(profileList);
-                    screen.addEventListener('click', (e) => {
+                    screenEl.appendChild(profileList);
+                    screenEl.addEventListener('click', (e) => {
                         const target = e.target;
-                        const pendingExpunge = screen.querySelector('.confirm-expunge');
+                        const pendingExpunge = screenEl.querySelector('.confirm-expunge');
                         if (pendingExpunge && !target.closest('.confirm-expunge')) { const btn = pendingExpunge.querySelector('.expunge-button'); btn.textContent = '[ X ]'; btn.classList.remove('confirm-expunge-btn'); pendingExpunge.classList.remove('confirm-expunge'); }
                         if (target.closest('.expunge-button')) { e.stopPropagation(); const expungeBtn = target.closest('.expunge-button'); const parentPlate = expungeBtn.closest('.identity-plate'); if (expungeBtn.classList.contains('confirm-expunge-btn')) { AXIOM.SoundEngine.playSound('delete'); AXIOM.state.allProfiles = AXIOM.state.allProfiles.filter(p => p.name !== expungeBtn.dataset.expungeName); AXIOM.PersistenceManager.saveState(); parentPlate.style.opacity = '0'; setTimeout(() => parentPlate.remove(), 300); } else { AXIOM.SoundEngine.playSound('error'); expungeBtn.textContent = '[ ¿CONFIRMAR? ]'; expungeBtn.classList.add('confirm-expunge-btn'); parentPlate.classList.add('confirm-expunge'); } } 
                         else if (target.closest('.identity-plate')) { AXIOM.Logic.requestFullscreen(); AXIOM.SoundEngine.playSound('click_primary'); const profileName = target.closest('.identity-plate').dataset.name; AXIOM.state.activeProfile = AXIOM.state.allProfiles.find(p => p.name === profileName); AXIOM.state.activeProfile.lastAccess = new Date().toISOString(); AXIOM.PersistenceManager.saveState(); AXIOM.ScreenManager.transitionTo(this.buildCategoryHubScreen); }
                         else if (target.closest('.new-profile-plate')) { AXIOM.Logic.requestFullscreen(); AXIOM.SoundEngine.playSound('click_primary'); AXIOM.ScreenManager.transitionTo(this.buildPlayerNameScreen); }
                     });
-                    return screen;
+                    return { element: screenEl };
                 },
                 buildPlayerNameScreen() {
-                    AXIOM.state.activeNameInput = "";
-                    const screen = this.createElement('div', { id: 'player-name-screen', classList: ['screen'] });
+                    let activeNameInput = "";
+                    let isShiftActive = false;
+                    
+                    const screenEl = this.createElement('div', { id: 'player-name-screen', classList: ['screen'] });
                     const inputArea = this.createElement('div', { id: 'name-input-area' });
                     const displayContainer = this.createElement('div', { id: 'name-display-container' });
                     const nameDisplay = this.createElement('span', { id: 'name-display' });
@@ -358,36 +376,56 @@
                     const statusMessage = this.createElement('p', { id: 'status-message' });
                     inputArea.append(displayContainer, statusMessage);
                     const kbContainer = this.createElement('div', { id: 'virtual-keyboard' });
-                    const layout = [[['Q'],['W'],['E'],['R'],['T'],['Y'],['U'],['I'],['O'],['P']], [['A'],['S'],['D'],['F'],['G'],['H'],['J'],['K'],['L'],['ENTER', 'key-special']], [['SHIFT', 'key-special', 'key-shift'],['Z'],['X'],['C'],['V'],['B'],['N'],['M'],['BORRAR', 'key-special']],[['ESPACIO', 'key-special', 'key-wide']]];
-                    layout.forEach(row => { const rowDiv = this.createElement('div', { classList: ['keyboard-row'] }); row.forEach(keyInfo => { const [key, ...classes] = keyInfo; const btn = this.createElement('button', { classList: ['key', ...classes], dataset: { key } }); if (key.length > 1) { btn.textContent = key; } else { btn.append(this.createElement('span', { classList: ['case-down'], textContent: key.toLowerCase() }), this.createElement('span', { classList: ['case-up'], textContent: key.toUpperCase() })); } rowDiv.appendChild(btn); }); kbContainer.appendChild(rowDiv); });
-                    const updateNameDisplay = () => { nameDisplay.textContent = AXIOM.state.activeNameInput; };
+                    
+                    AXIOM.KEYBOARD_STANDARD_LAYOUT.forEach(row => { 
+                        const rowDiv = this.createElement('div', { classList: ['keyboard-row'] }); 
+                        row.forEach(keyInfo => { 
+                            const [key, ...classes] = keyInfo; 
+                            const btn = this.createElement('button', { classList: ['key', ...classes], dataset: { key } }); 
+                            if (key.length > 1) { 
+                                btn.textContent = key; 
+                            } else { 
+                                btn.append(this.createElement('span', { classList: ['case-down'], textContent: key.toLowerCase() }), this.createElement('span', { classList: ['case-up'], textContent: key.toUpperCase() })); 
+                            } 
+                            rowDiv.appendChild(btn); 
+                        }); 
+                        kbContainer.appendChild(rowDiv); 
+                    });
+                    
+                    const updateNameDisplay = () => { nameDisplay.textContent = activeNameInput; };
+
                     kbContainer.addEventListener('click', e => {
                         const keyBtn = e.target.closest('.key'); if (!keyBtn) return;
                         const key = keyBtn.dataset.key;
                         statusMessage.textContent = '';
                         switch (key) {
-                            case 'SHIFT': AXIOM.SoundEngine.playSound('click_secondary'); AXIOM.state.isShiftActive = !AXIOM.state.isShiftActive; kbContainer.classList.toggle('shift-active', AXIOM.state.isShiftActive); keyBtn.classList.toggle('active', AXIOM.state.isShiftActive); break;
-                            case 'BORRAR': AXIOM.SoundEngine.playSound('delete'); AXIOM.state.activeNameInput = AXIOM.state.activeNameInput.slice(0, -1); break;
-                            case 'ENTER': const name = AXIOM.state.activeNameInput.trim(); if (name.length < 2) { AXIOM.SoundEngine.playSound('error'); statusMessage.textContent = '>> ID DEMASIADO CORTO (MÍN. 2 CARACTERES) <<'; } else if (AXIOM.state.allProfiles.some(p => p.name.toLowerCase() === name.toLowerCase())) { AXIOM.SoundEngine.playSound('error'); statusMessage.textContent = '>> IDENTIFICADOR EN USO. ACCESO DENEGADO. <<'; } else { AXIOM.SoundEngine.playSound('success', 0); const newProfile = { name: name, progress: {}, lastAccess: new Date().toISOString() }; AXIOM.gameData.forEach(cat => { newProfile.progress[cat.id] = { attempts: [], flawless: true }; }); AXIOM.state.allProfiles.push(newProfile); AXIOM.state.activeProfile = newProfile; AXIOM.PersistenceManager.saveState(); AXIOM.ScreenManager.transitionTo(this.buildCategoryHubScreen); } return;
-                            case 'ESPACIO': if (AXIOM.state.activeNameInput.length < 16) { AXIOM.SoundEngine.playSound('click_secondary'); AXIOM.state.activeNameInput += ' '; } break;
-                            default: if (AXIOM.state.activeNameInput.length < 16) { AXIOM.SoundEngine.playSound('click_secondary'); AXIOM.state.activeNameInput += AXIOM.state.isShiftActive ? key.toUpperCase() : key.toLowerCase(); } break;
+                            case 'SHIFT': AXIOM.SoundEngine.playSound('click_secondary'); isShiftActive = !isShiftActive; kbContainer.classList.toggle('shift-active', isShiftActive); keyBtn.classList.toggle('active', isShiftActive); break;
+                            case 'BORRAR': AXIOM.SoundEngine.playSound('delete'); activeNameInput = activeNameInput.slice(0, -1); break;
+                            case 'ENTER': const name = activeNameInput.trim(); if (name.length < 2) { AXIOM.SoundEngine.playSound('error'); statusMessage.textContent = '>> ID DEMASIADO CORTO (MÍN. 2 CARACTERES) <<'; } else if (AXIOM.state.allProfiles.some(p => p.name.toLowerCase() === name.toLowerCase())) { AXIOM.SoundEngine.playSound('error'); statusMessage.textContent = '>> IDENTIFICADOR EN USO. ACCESO DENEGADO. <<'; } else { AXIOM.SoundEngine.playSound('success', 0); const newProfile = { name: name, progress: {}, lastAccess: new Date().toISOString() }; AXIOM.gameData.forEach(cat => { newProfile.progress[cat.id] = { attempts: [], flawless: true }; }); AXIOM.state.allProfiles.push(newProfile); AXIOM.state.activeProfile = newProfile; AXIOM.PersistenceManager.saveState(); AXIOM.ScreenManager.transitionTo(this.buildCategoryHubScreen); } return;
+                            case 'ESPACIO': if (activeNameInput.length < 16) { AXIOM.SoundEngine.playSound('click_secondary'); activeNameInput += ' '; } break;
+                            default: if (activeNameInput.length < 16) { AXIOM.SoundEngine.playSound('click_secondary'); activeNameInput += isShiftActive ? key.toUpperCase() : key.toLowerCase(); } break;
                         }
-                        if (key !== 'SHIFT' && AXIOM.state.isShiftActive) { AXIOM.state.isShiftActive = false; kbContainer.classList.remove('shift-active'); kbContainer.querySelector('.key-shift')?.classList.remove('active'); }
+                        if (key !== 'SHIFT' && isShiftActive) { isShiftActive = false; kbContainer.classList.remove('shift-active'); kbContainer.querySelector('.key-shift')?.classList.remove('active'); }
                         updateNameDisplay();
                     });
-                    screen.append(this.createElement('h2', { textContent: 'INGRESE IDENTIFICADOR DE OPERARIO:' }), inputArea, kbContainer);
-                    updateNameDisplay(); return screen;
+                    
+                    screenEl.append(this.createElement('h2', { textContent: 'INGRESE IDENTIFICADOR DE OPERARIO:' }), inputArea, kbContainer);
+                    updateNameDisplay(); 
+                    return { element: screenEl };
                 },
                 buildCategoryHubScreen() {
-                    const screen = this.createElement('div', { id: 'category-hub-screen', classList: ['screen'] });
+                    const screenEl = this.createElement('div', { id: 'category-hub-screen', classList: ['screen'] });
                     const header = this.createElement('div', { id: 'hub-header' });
                     const hubActions = this.createElement('div', { classList: ['hub-actions'] });
                     const audioBtn = this.createElement('button', { classList: ['secondary-button'], textContent: AXIOM.SoundEngine.isMuted ? '[ AUDIO: OFF ]' : '[ AUDIO: ON ]' });
                     const settingsBtn = this.createElement('button', { classList: ['secondary-button'], textContent: '[ CALIBRAR ]' });
                     const logoutBtn = this.createElement('button', { classList: ['secondary-button', 'logout-button'], textContent: '[ CAMBIAR ]' });
+                    const disconnectBtn = this.createElement('button', { classList: ['secondary-button', 'disconnect-button'], textContent: '[ CERRAR CONEXIÓN ]' });
+                    
                     header.appendChild(this.createElement('h2', { textContent: `Operario: ${AXIOM.state.activeProfile.name}`}));
-                    hubActions.append(audioBtn, settingsBtn, logoutBtn);
+                    hubActions.append(audioBtn, settingsBtn, logoutBtn, disconnectBtn);
                     header.appendChild(hubActions);
+                    
                     const grid = this.createElement('div', { id: 'category-grid' });
                     AXIOM.gameData.forEach(c => {
                         const progressObject = AXIOM.state.activeProfile.progress[c.id];
@@ -406,28 +444,32 @@
                         card.appendChild(cardInfo);
                         grid.appendChild(card);
                     });
-                    screen.append(header, grid);
-                    screen.addEventListener('click', e => {
+                    
+                    screenEl.append(header, grid);
+                    
+                    screenEl.addEventListener('click', e => {
                         if (e.target.closest('.category-card')) { AXIOM.SoundEngine.playSound('click_primary'); AXIOM.ScreenManager.transitionTo(this.buildChallengeMatrixScreen, e.target.closest('.category-card').dataset.categoryId); } 
                         else if (e.target.closest('.logout-button')) { AXIOM.SoundEngine.playSound('click_primary'); AXIOM.state.activeProfile = null; AXIOM.ScreenManager.transitionTo(this.buildProfileManagerScreen); }
                         else if (e.target === audioBtn) { AXIOM.SoundEngine.setMuteState(!AXIOM.SoundEngine.isMuted); e.target.textContent = AXIOM.SoundEngine.isMuted ? '[ AUDIO: OFF ]' : '[ AUDIO: ON ]'; AXIOM.SoundEngine.playSound('click_secondary'); }
                         else if (e.target === settingsBtn) { AXIOM.SoundEngine.playSound('click_primary'); AXIOM.ScreenManager.transitionTo(this.buildSettingsScreen); }
+                        else if (e.target === disconnectBtn) { AXIOM.SoundEngine.playSound('error'); AXIOM.Logic.rebootSystem(); }
                     });
-                    return screen;
+                    
+                    return { element: screenEl };
                 },
                 buildChallengeMatrixScreen(categoryId) { 
                     const category = AXIOM.gameData.find(c => c.id === categoryId); 
-                    if (!category) { console.error(`CRITICAL FAILURE: Invalid categoryId '${categoryId}'. Retreating to safe state.`); AXIOM.ScreenManager.transitionTo(this.buildCategoryHubScreen); return this.createElement('div'); }
-                    const screen = this.createElement('div', { id: 'challenge-matrix-screen', classList: ['screen'] });
+                    if (!category) { console.error(`CRITICAL FAILURE: Invalid categoryId '${categoryId}'. Retreating to safe state.`); AXIOM.ScreenManager.transitionTo(this.buildCategoryHubScreen); return { element: this.createElement('div') }; }
+                    
+                    const screenEl = this.createElement('div', { id: 'challenge-matrix-screen', classList: ['screen'] });
                     const progress = AXIOM.state.activeProfile.progress[categoryId].attempts;
                     const grid = this.createElement('div', { id: 'challenge-grid' });
+
                     for (let i = 1; i <= category.questions.length; i++) {
                         const prog = progress.find(p => p.qId === i);
-                        let statusText = '[ DESBLOQUEADO ]';
                         let statusClass = null;
                         if(prog) {
-                            if(prog.correct) { statusText = '[ INTEGRIDAD COMPROBADA ]'; statusClass = 'status-correct'; }
-                            else { statusText = '[ SEÑAL CORRUPTA ]'; statusClass = 'status-incorrect'; }
+                            statusClass = prog.correct ? 'status-correct' : 'status-incorrect';
                         }
                         const node = this.createElement('div', { classList: ['matrix-node', 'cascade-item', statusClass], dataset: { questionId: i }});
                         const core = this.createElement('div', { classList: ['node-core'] });
@@ -435,21 +477,28 @@
                             this.createElement('span', { classList: ['node-glyph'], textContent: category.glyph }),
                             this.createElement('span', { classList: ['node-identifier'], textContent: String(i).padStart(2, '0') })
                         );
-                        node.append(core, this.createElement('div', { classList: ['node-status'], textContent: statusText }));
+                        node.appendChild(core);
                         grid.appendChild(node);
                     }
                     const backBtn = this.createElement('button', { classList: ['back-button'], innerHTML: '&lt; VOLVER' });
-                    screen.append(this.createElement('h2', { textContent: category.title }), grid, backBtn);
-                    screen.addEventListener('click', e => { 
+                    screenEl.append(this.createElement('h2', { textContent: category.title }), grid, backBtn);
+                    screenEl.addEventListener('click', e => { 
                         const node = e.target.closest('.matrix-node'); 
-                        if (node && !node.classList.contains('status-correct')) { AXIOM.SoundEngine.playSound('click_primary'); const qId = parseInt(node.dataset.questionId, 10); const question = category.questions.find(q => q.id === qId); if (question) { AXIOM.ScreenManager.transitionTo(this.buildGameInterfaceScreen, categoryId, qId, question); } } 
+                        if (node && !node.classList.contains('status-correct')) { 
+                            AXIOM.SoundEngine.playSound('click_primary'); 
+                            const qId = parseInt(node.dataset.questionId, 10); 
+                            const question = category.questions.find(q => q.id === qId); 
+                            if (question) { 
+                                AXIOM.ScreenManager.transitionTo(this.buildGameInterfaceScreen, categoryId, qId, question); 
+                            } 
+                        } 
                         else if (e.target.closest('.back-button')) { AXIOM.SoundEngine.playSound('click_primary'); AXIOM.ScreenManager.transitionTo(this.buildCategoryHubScreen); } 
                     });
-                    return screen; 
+                    return { element: screenEl }; 
                 },
                 buildGameInterfaceScreen(categoryId, questionId, question) {
                     const category = AXIOM.gameData.find(c => c.id === categoryId);
-                    const screen = this.createElement('div', { id: 'game-interface-screen', classList: ['screen'], dataset: { question: question.text, options: JSON.stringify(question.options), categoryId, questionId, fullQuestion: JSON.stringify(question) } });
+                    const screenEl = this.createElement('div', { id: 'game-interface-screen', classList: ['screen'] });
                     const contextPanel = this.createElement('div', { classList: ['context-panel']});
                     contextPanel.append(
                         this.createElement('h3', { textContent: `${category.title} // DESAFÍO ${String(questionId).padStart(2, '0')}`}),
@@ -460,28 +509,41 @@
                     for (let i = 0; i < shuffledOptions.length; i++) {
                         interactionPanel.appendChild(this.createElement('div', { classList: ['option-cell'], dataset: { answer: shuffledOptions[i] } }));
                     }
-                    screen.append(contextPanel, interactionPanel);
-                    AXIOM.state.questionStartTime = performance.now();
-                    return screen;
+                    screenEl.append(contextPanel, interactionPanel);
+                    
+                    const onMount = () => {
+                        AXIOM.state.questionStartTime = performance.now();
+                        AXIOM.Logic.typewriterRender(
+                            screenEl.querySelector('.context-panel p'),
+                            Array.from(screenEl.querySelectorAll('.option-cell')),
+                            question.text,
+                            question.options,
+                            categoryId,
+                            questionId,
+                            question
+                        );
+                    };
+
+                    return { element: screenEl, onMount };
                 },
                 buildVerdictScreen(score, categoryId) {
                     const category = AXIOM.gameData.find(c => c.id === categoryId);
-                    const screen = this.createElement('div', { id: 'verdict-screen', classList: ['screen'] });
+                    const screenEl = this.createElement('div', { id: 'verdict-screen', classList: ['screen'] });
                     const scorePanel = this.createElement('div', { classList: ['score-panel'] });
                     scorePanel.append(
                         this.createElement('h3', { textContent: '[ REGISTRO DE PUNTUACIÓN ]' }),
                         this.createElement('p', { textContent: `+${score.toLocaleString()}` })
                     );
-                    screen.append(
+                    screenEl.append(
                         this.createElement('div', { classList: ['verdict-bg-glyph'], textContent: category.glyph }),
                         this.createElement('p', { id: 'verdict-message', classList: ['verdict-correct'], textContent: '>> CORRECTO <<' }),
                         scorePanel
                     );
                     setTimeout(() => AXIOM.ScreenManager.transitionTo(this.buildChallengeMatrixScreen, categoryId), 2500);
-                    return screen;
+                    return { element: screenEl };
                 },
                 buildReviewScreen(question, chosenOption, categoryId) {
-                    const screen = this.createElement('div', { id: 'review-screen', classList: ['screen'] });
+                    const screenEl = this.createElement('div', { id: 'review-screen', classList: ['screen'] });
                     const questionBox = this.createElement('div', { classList: ['review-box'] });
                     questionBox.append(this.createElement('h3', { textContent: 'PREGUNTA:' }), this.createElement('p', { textContent: question.text }));
                     const analysisBox = this.createElement('div', { classList: ['review-box'] });
@@ -494,11 +556,11 @@
                     analysisBox.append(this.createElement('h3', { textContent: 'ANÁLISIS:' }), analysisDiv);
                     const continueButton = this.createElement('button', { classList: ['primary-button'], textContent: '[ CONTINUAR ]' });
                     continueButton.addEventListener('click', () => { AXIOM.SoundEngine.playSound('click_primary'); AXIOM.ScreenManager.transitionTo(this.buildChallengeMatrixScreen, categoryId); });
-                    screen.append(this.createElement('h2', { textContent: '>> INCORRECTO <<' }), questionBox, analysisBox, continueButton);
-                    return screen;
+                    screenEl.append(this.createElement('h2', { textContent: '>> INCORRECTO <<' }), questionBox, analysisBox, continueButton);
+                    return { element: screenEl };
                 },
                  buildSettingsScreen() {
-                    const screen = this.createElement('div', { id: 'settings-screen', classList: ['screen'] });
+                    const screenEl = this.createElement('div', { id: 'settings-screen', classList: ['screen'] });
                     const header = this.createElement('h2', { textContent: 'CALIBRACIÓN VISUAL' });
                     const themeGrid = this.createElement('div', { id: 'theme-grid' });
                     const currentTheme = AXIOM.PersistenceManager.loadTheme();
@@ -511,17 +573,21 @@
                         themeGrid.appendChild(card);
                     }
                     const backBtn = this.createElement('button', { classList: ['back-button'], innerHTML: '&lt; VOLVER' });
-                    screen.append(header, themeGrid, backBtn);
-                    screen.addEventListener('click', e => {
+                    screenEl.append(header, themeGrid, backBtn);
+                    screenEl.addEventListener('click', e => {
                         const card = e.target.closest('.theme-card');
-                        if (card) { AXIOM.SoundEngine.playSound('click_primary'); AXIOM.Logic.applyTheme(card.dataset.themeKey); screen.querySelector('.theme-card.active')?.classList.remove('active'); card.classList.add('active'); } 
+                        if (card) { AXIOM.SoundEngine.playSound('click_primary'); AXIOM.Logic.applyTheme(card.dataset.themeKey); screenEl.querySelector('.theme-card.active')?.classList.remove('active'); card.classList.add('active'); } 
                         else if (e.target.closest('.back-button')) { AXIOM.SoundEngine.playSound('click_primary'); AXIOM.ScreenManager.transitionTo(this.buildCategoryHubScreen); }
                     });
-                    return screen;
+                    return { element: screenEl };
                 }
             },
 
             Logic: {
+                rebootSystem() {
+                    AXIOM.state.activeProfile = null;
+                    AXIOM.ScreenManager.transitionTo(AXIOM.UI.createPreloaderScreen);
+                },
                 applyTheme(themeKey) {
                     const theme = AXIOM.themes[themeKey];
                     if (!theme) return;
