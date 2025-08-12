@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AXIOM INTERFACE :: BETA 1.6 (ESTADO SIMBÓLICO)</title>
+    <title>AXIOM INTERFACE :: BETA 1.7 (NÚCLEO ESTABLE)</title>
     <style>
         /*
-         * PROTOCOLO CERO v5.3 :: DIRECTIVA DE ESTILO (ESTADO SIMBÓLICO / BETA 1.6)
+         * PROTOCOLO CERO v5.4 :: DIRECTIVA DE ESTILO (NÚCLEO ESTABLE / BETA 1.7)
          * IDENTIDAD: AXIOM
          * ESTADO: ACTIVO
         */
@@ -106,7 +106,6 @@
         .mastery-triad { position: absolute; top: 0.5vmin; right: 1vmin; font-size: clamp(1rem, 2vw, 1.2rem); letter-spacing: 0.2em; opacity: 0.2; color: var(--color-text-passive); transition: all 0.5s; }
         .mastery-triad.mastered { opacity: 1; color: var(--color-accent-primary); text-shadow: 0 0 8px var(--color-accent-primary); }
 
-        /* REFACTOR: Matriz de Estado Simbólico */
         #challenge-matrix-screen { justify-content: flex-start; padding: 2vh 1vw; gap: 1vh; width:100%; } 
         #challenge-matrix-screen h2 { font-size: clamp(1.2rem, 2.5vw, 1.5rem); text-align: center; padding: 0 1rem; margin-bottom: 2vh; text-shadow: 0 0 8px var(--color-accent-primary); flex-shrink: 0;} 
         #challenge-grid { position: relative; width: 100%; margin: 0 auto; display: grid; gap: 1vmin; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(5, 1fr); flex-grow: 1; padding: 1vmin; min-height: 0; } 
@@ -172,7 +171,7 @@
     <div id="app-container"></div>
 
     <script>
-    // System Directive: BETA 1.6 (ESTADO SIMBÓLICO)
+    // System Directive: BETA 1.7 (NÚCLEO ESTABLE)
     // Protocol: AXIOM Engaged.
 
     (() => {
@@ -214,9 +213,9 @@
             },
 
             PersistenceManager: {
-                SAVE_KEY: 'AXIOM_VAULT_SAVE_BETA1_6',
-                AUDIO_KEY: 'AXIOM_VAULT_AUDIO_MUTED_BETA1_6',
-                THEME_KEY: 'AXIOM_VAULT_THEME_BETA1_6',
+                SAVE_KEY: 'AXIOM_VAULT_SAVE_BETA1_7',
+                AUDIO_KEY: 'AXIOM_VAULT_AUDIO_MUTED_BETA1_7',
+                THEME_KEY: 'AXIOM_VAULT_THEME_BETA1_7',
                 loadState: () => { try { const data = localStorage.getItem(AXIOM.PersistenceManager.SAVE_KEY); AXIOM.state.allProfiles = data ? JSON.parse(data) : []; } catch (e) { console.error("Error loading profiles.", e); AXIOM.state.allProfiles = []; } },
                 saveState: () => { try { localStorage.setItem(AXIOM.PersistenceManager.SAVE_KEY, JSON.stringify(AXIOM.state.allProfiles)); } catch (e) { console.error("Error saving profiles.", e); } },
                 loadAudioPref: () => localStorage.getItem(AXIOM.PersistenceManager.AUDIO_KEY) === 'true',
@@ -268,7 +267,11 @@
 
             ScreenManager: {
                 currentScreen: null,
+                isTransitioning: false, // REFACTOR: Transition Lock
                 transitionTo(screenBuilderFn, ...args) {
+                    if (this.isTransitioning) return; // REFACTOR: Abort if a transition is in progress.
+                    this.isTransitioning = true; // REFACTOR: Activate the lock.
+
                     AXIOM.SoundEngine.playSound('transition');
                     const oldScreenElement = this.currentScreen ? this.currentScreen.element : null;
                     
@@ -294,7 +297,8 @@
                         if (newScreen.onMount) {
                             newScreen.onMount();
                         }
-
+                        
+                        this.isTransitioning = false; // REFACTOR: Release the lock after completion.
                     }, oldScreenElement ? 250 : 0);
                 }
             },
@@ -305,7 +309,7 @@
                     const screenEl = this.createElement('div', { id: 'preloader-screen', classList: ['screen'] });
                     const bootSequence = [
                         'INITIATING AXIOM KERNEL...',
-                        'LOADING PROTOCOL CERO v5.3...         [OK]',
+                        'LOADING PROTOCOL CERO v5.4...         [OK]',
                         'VERIFYING DATA VAULT INTEGRITY...      [SECURE]',
                         'RENDER ENGINE ONLINE...                [ACTIVE]',
                         '',
@@ -329,7 +333,7 @@
                     startButton.addEventListener('click', () => { AXIOM.Logic.requestFullscreen(); AXIOM.SoundEngine.playSound('click_primary'); AXIOM.ScreenManager.transitionTo(this.buildProfileManagerScreen); });
                     screenEl.append(
                         this.createElement('h1', { textContent: 'AXIOM' }),
-                        this.createElement('h2', { textContent: 'BETA 1.6 // ESTADO SIMBÓLICO' }),
+                        this.createElement('h2', { textContent: 'BETA 1.7 // NÚCLEO ESTABLE' }),
                         startButton
                     );
                     return { element: screenEl };
